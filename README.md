@@ -735,11 +735,12 @@ public QueryPlan execute(String query) {
 
 📊 SCENARIO 1 METRICS:
 ```
+```
   • Total Execution Time: 1501 ms
   • Total Queries: 17
   • Plans Generated: 17 (100%)
   • Avg Time/Query: 88.29 ms
-
+```
 
 ### Scenario 2: With Cache (Demonstrating Reuse)
 
@@ -829,35 +830,40 @@ Output :
    Comparing: WITHOUT CACHE vs WITH CACHE
    (Both scenarios use same queries with no schema changes)
 
-| Scenario                 | Total Time | Avg Time/Query | Hit Ratio | Speedup |
-|--------------------------|------------|----------------|-----------|---------|
-| 1. WITHOUT CACHE         | 1501 ms    | 88.29 ms       | N/A       | 1.0x    |
-| 2. WITH CACHE            | 551 ms     | 32.41 ms       | 47.1%     | 2.7x    |
+| Scenario               | Total Time | Avg Time | Total Q | Hits | Misses | Hit Ratio | Miss Ratio |
+|------------------------|------------|----------|---------|------|--------|-----------|------------|
+| 1. WITHOUT CACHE       | 2239 ms    | 131.71 ms| 17      | N/A  | N/A    | N/A       | N/A        |
+| 2. WITH CACHE          | 325 ms     | 19.12 ms | 17      | 8    | 9      | 47.1%     | 52.9%      |
 
-📈 PERFORMANCE IMPROVEMENT: 63.3% faster with cache
-⚡ SPEEDUP FACTOR: 2.7x (55.9 ms saved per query on average)
-✅ CACHE EFFICIENCY: 47.1% hit rate across 17 queries
+- **Performance Improvement:** 85.5% faster with cache  
+- **Speedup Factor:** 6.9x (112.6 ms saved per query on average)  
+- **Cache Efficiency:** 47.1% hit rate across 17 queries  
+- **Miss Ratio:** 52.9%  
+- **Total Queries Processed:** 17  
+- **Cache Size:** 9 unique plans  
 ```
 
-| Q# | Query Pattern | No Cache (ms) | With Cache (ms) | Cache Status |
-|----|--------------|---------------|-----------------|--------------|
-| 1 | Users by ID (Pattern 1) | 377 | 49 | ❌ MISS |
-| 2 | Users by ID (Pattern 1 - same) | 61 | 2 | ✅ HIT |
-| 3 | Users by ID (Pattern 1 - same) | 57 | 2 | ✅ HIT |
-| 4 | Users by ID (Pattern 1 - same) | 71 | 1 | ✅ HIT |
-| 5 | Products price > (Pattern 2) | 52 | 55 | ❌ MISS |
-| 6 | Products price < (Pattern 3 - different) | 76 | 52 | ❌ MISS |
-| 7 | Products price = (Pattern 4 - different) | 69 | 60 | ❌ MISS |
-| 8 | Users by name (Pattern 5) | 61 | 56 | ❌ MISS |
-| 9 | Users by name (Pattern 5 - same) | 59 | 3 | ✅ HIT |
-| 10 | Users by name (Pattern 5 - same) | 76 | 2 | ✅ HIT |
-| 11 | JOIN orders/customers (Pattern 6) | 106 | 66 | ❌ MISS |
-| 12 | JOIN orders/customers (Pattern 6 - same) | 54 | 6 | ✅ HIT |
-| 13 | Aggregate GROUP BY (Pattern 7) | 56 | 48 | ❌ MISS |
-| 14 | Aggregate GROUP BY (Pattern 7 - same) | 61 | 2 | ✅ HIT |
-| 15 | Subquery IN (Pattern 8) | 71 | 62 | ❌ MISS |
-| 16 | ORDER BY with LIMIT (Pattern 9) | 67 | 56 | ❌ MISS |
-| 17 | ORDER BY with LIMIT (Pattern 9 - same) | 66 | 2 | ✅ HIT |
+### Per-Query Breakdown
+
+| Q# | Query Pattern                                | No Cache (ms) | With Cache (ms) | Status   |
+|----|----------------------------------------------|---------------|-----------------|----------|
+| 1  | Users by ID (Pattern 1)                      | 1716          | 38              | ❌ MISS  |
+| 2  | Users by ID (Pattern 1 - same)               | 33            | 1               | ✅ HIT   |
+| 3  | Users by ID (Pattern 1 - same)               | 32            | 1               | ✅ HIT   |
+| 4  | Users by ID (Pattern 1 - same)               | 16            | 0               | ✅ HIT   |
+| 5  | Products price > (Pattern 2)                 | 30            | 36              | ❌ MISS  |
+| 6  | Products price < (Pattern 3 - different)     | 19            | 29              | ❌ MISS  |
+| 7  | Products price = (Pattern 4 - different)     | 39            | 38              | ❌ MISS  |
+| 8  | Users by name (Pattern 5)                    | 48            | 27              | ❌ MISS  |
+| 9  | Users by name (Pattern 5 - same)             | 14            | 1               | ✅ HIT   |
+| 10 | Users by name (Pattern 5 - same)             | 13            | 0               | ✅ HIT   |
+| 11 | JOIN orders/customers (Pattern 6)            | 43            | 45              | ❌ MISS  |
+| 12 | JOIN orders/customers (Pattern 6 - same)     | 40            | 4               | ✅ HIT   |
+| 13 | Aggregate GROUP BY (Pattern 7)               | 37            | 39              | ❌ MISS  |
+| 14 | Aggregate GROUP BY (Pattern 7 - same)        | 28            | 2               | ✅ HIT   |
+| 15 | Subquery IN (Pattern 8)                      | 36            | 18              | ❌ MISS  |
+| 16 | ORDER BY with LIMIT (Pattern 9)              | 29            | 27              | ❌ MISS  |
+| 17 | ORDER BY with LIMIT (Pattern 9 - same)       | 34            | 1               | ✅ HIT   |
 
 
 ```
@@ -878,7 +884,6 @@ Step 3: Run the Test Suite
 java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
 Step 4: Run Demo Application
-```
 ```
 java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
 ```
