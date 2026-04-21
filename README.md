@@ -738,10 +738,10 @@ public QueryPlan execute(String query) {
 📊 SCENARIO 1 METRICS:
 ```
 ```
-  • Total Execution Time: 1501 ms
+  • Total Execution Time: 2239 ms
   • Total Queries: 17
   • Plans Generated: 17 (100%)
-  • Avg Time/Query: 88.29 ms
+  • Avg Time/Query: 131.71 ms
 ```
 
 ### Scenario 2: With Cache (Demonstrating Reuse)
@@ -770,10 +770,10 @@ Output :
 ### 📊 METRICS:
 ```
 
-  • Total Execution Time: 551 ms
+  • Total Execution Time: 325 ms
   • Cache Hits: 8 | Cache Misses: 9
   • Hit Ratio: 47.1% | Miss Ratio: 52.9%
-  • Avg Time/Query: 32.41 ms
+  • Avg Time/Query: 19.12 ms
 
   📦 Cache Contents:
     • Total cached plans: 9
