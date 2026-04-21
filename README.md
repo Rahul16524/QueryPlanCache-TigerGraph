@@ -5,3 +5,6 @@ This project implements a Query Plan Caching Mechanism in Java that optimizes SQ
 🎯 Problem Statement
 
 In real-world databases, executing queries repeatedly with different literal values often triggers redundant plan generation, consuming extra computation time. For example, two queries with different parameter values but identical structure may produce identical execution plans — yet most systems will re-plan them each time. This project addresses that inefficiency by implementing a query plan cache that recognizes structural similarity between queries and reuses existing plans.
+
+<img width="1095" height="536" alt="image" src="https://github.com/user-attachments/assets/5bfdcc8b-39ae-495c-98c8-9ed161099d29" />
+
