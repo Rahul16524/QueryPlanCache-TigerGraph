@@ -307,7 +307,7 @@ Goal: Simulate realistic plan generation costs without actual database.
 Approach - Randomized Delay:
 
 ```
-private static final int PLAN_GEN_BASE_TIME = 10;  // 10ms base (not 45ms!)
+private static final int PLAN_GEN_BASE_TIME = 10;  // 10ms base 
 
 // Simulate plan generation (10-45ms range)
 Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 35));
