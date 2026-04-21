@@ -36,6 +36,10 @@ In real-world databases, executing queries repeatedly with different parameter v
 | `SQLite.g4` | ANTLR grammar file for SQL parsing |
 
 ---
+
+## Overview
+The cache mechanism uses a multi-layered approach combining query normalization, schema-aware invalidation, and adaptive cache management. Each design decision addresses specific challenges in real-world query caching.
+
 ### 1. Query Normalization Strategy
 
 **Goal:** Transform structurally identical queries with different literal values into the same canonical form.
