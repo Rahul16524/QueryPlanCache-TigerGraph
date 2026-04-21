@@ -732,13 +732,14 @@ public QueryPlan execute(String query) {
       🔍 Normalized: select * from users where id = ?
 ```
 
+
 📊 SCENARIO 1 METRICS:
 ```
   • Total Execution Time: 1501 ms
   • Total Queries: 17
   • Plans Generated: 17 (100%)
   • Avg Time/Query: 88.29 ms
-``` 
+
 
 ### Scenario 2: With Cache (Demonstrating Reuse)
 
