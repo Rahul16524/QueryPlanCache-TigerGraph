@@ -90,14 +90,6 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 **Why this approach:** Correctness guaranteed, only invalidates necessary plans, fast O(n) scan.
 
-### 5. Performance Improvement Calculation
-
-| Metric | Without Cache | With Cache | Improvement |
-|--------|---------------|------------|-------------|
-| Total Time | 1414 ms | 599 ms | 57.6% faster |
-| Avg Time/Query | 83.18 ms | 35.24 ms | 2.4x speedup |
-| Hit Ratio | N/A | 47.1% | Efficient reuse |
-
 **Real-world impact:** 1 million queries/day with 47% hit ratio saves ~6.3 hours per day!
 
 ## 🏗️ System Architecture
