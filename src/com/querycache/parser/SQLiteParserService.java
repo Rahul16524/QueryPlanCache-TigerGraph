@@ -20,6 +20,7 @@ public class SQLiteParserService {
     
     // Set to true to see lexer/parser output (for educational purposes)
     private static boolean DEBUG = true;
+    private static int queryCount = 0;
     
     /**
      * Normalize query using ANTLR Lexer + Parser + Visitor
@@ -32,65 +33,69 @@ public class SQLiteParserService {
      * @param query Original SQL query
      * @return Normalized query with literals replaced by '?'
      */
-    public String normalizeQuery(String query) {
-        try {
-            // ===== STEP 1: LEXER (Tokenization) =====
-            SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(query));
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-            
-//          match type of lexer grammar rule with query
-            if (DEBUG) {
-                System.out.println("\n🔤 [LEXER OUTPUT] Tokens:");
-                tokens.fill();
-                for (Token token : tokens.getTokens()) {
-                    String type = lexer.getVocabulary().getSymbolicName(token.getType());
-                    // Skip SPACES for cleaner output
-                    if (type != null && !type.equals("SPACES") && !type.equals("UNEXPECTED_CHAR")) {
-                        String text = token.getText().replace("\n", "\\n");
-                        if (text.length() > 30) text = text.substring(0, 27) + "...";
-                        System.out.printf("   %-20s : '%s'%n", type, text);
+        public String normalizeQuery(String query) {
+            try {
+                queryCount++;  // ← ADD THIS LINE (2)
+                boolean shouldPrint = DEBUG && (queryCount == 1);  // ← ADD THIS LINE (3)
+                
+                // ===== STEP 1: LEXER (Tokenization) =====
+                SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(query));
+                CommonTokenStream tokens = new CommonTokenStream(lexer);
+                
+                // CHANGE: replace DEBUG with shouldPrint
+                if (shouldPrint) {
+                    System.out.println("\n🔤 [LEXER OUTPUT] Tokens:");
+                    tokens.fill();
+                    for (Token token : tokens.getTokens()) {
+                        String type = lexer.getVocabulary().getSymbolicName(token.getType());
+                        // Skip SPACES for cleaner output
+                        if (type != null && !type.equals("SPACES") && !type.equals("UNEXPECTED_CHAR")) {
+                            String text = token.getText().replace("\n", "\\n");
+                            if (text.length() > 30) text = text.substring(0, 27) + "...";
+                            System.out.printf("   %-20s : '%s'%n", type, text);
+                        }
                     }
                 }
-            }
-            
-            // ===== STEP 2: PARSER (Build AST) =====
-            SQLiteParser parser = new SQLiteParser(tokens);
-            parser.removeErrorListeners();
-            
-            // Add error listener to catch syntax errors
-            ParserErrorListener errorListener = new ParserErrorListener();
-            parser.addErrorListener(errorListener);
-            
-            ParseTree tree = parser.parse();  // ← Builds Abstract Syntax Tree
-            
-            if (DEBUG) {
-                System.out.println("\n🌲 [PARSER OUTPUT] Parse Tree:");
-                // Use ANTLR's built-in tree printer (safe, no casting issues)
-                System.out.println(tree.toStringTree(parser));
-            }
-            
-            // ===== STEP 3: VISITOR (Walk & Transform) =====
-            QueryVisitor visitor = new QueryVisitor();
-            String normalized = visitor.visit(tree);
-            
-            if (DEBUG) {
-                System.out.println("\n✨ [VISITOR OUTPUT] Normalized Query:");
-                System.out.println("   Original:    " + query);
-                System.out.println("   Normalized:  " + normalized);
-                System.out.println("─".repeat(80));
-            }
-            
-            if (normalized == null || normalized.isEmpty()) {
+                
+                // ===== STEP 2: PARSER (Build AST) =====
+                SQLiteParser parser = new SQLiteParser(tokens);
+                parser.removeErrorListeners();
+                
+                // Add error listener to catch syntax errors
+                ParserErrorListener errorListener = new ParserErrorListener();
+                parser.addErrorListener(errorListener);
+                
+                ParseTree tree = parser.parse();
+                
+                // CHANGE: replace DEBUG with shouldPrint
+                if (shouldPrint) {
+                    System.out.println("\n🌲 [PARSER OUTPUT] Parse Tree:");
+                    System.out.println(tree.toStringTree(parser));
+                }
+                
+                // ===== STEP 3: VISITOR (Walk & Transform) =====
+                QueryVisitor visitor = new QueryVisitor();
+                String normalized = visitor.visit(tree);
+                
+                // CHANGE: replace DEBUG with shouldPrint
+                if (shouldPrint) {
+                    System.out.println("\n✨ [VISITOR OUTPUT] Normalized Query:");
+                    System.out.println("   Original:    " + query);
+                    System.out.println("   Normalized:  " + normalized);
+                    System.out.println("─".repeat(80));
+                }
+                
+                if (normalized == null || normalized.isEmpty()) {
+                    return fallbackNormalize(query);
+                }
+                
+                return normalized;
+                
+            } catch (Exception e) {
+                System.err.println("⚠️ Parser error, using fallback: " + e.getMessage());
                 return fallbackNormalize(query);
             }
-            
-            return normalized;
-            
-        } catch (Exception e) {
-            System.err.println("⚠️ Parser error, using fallback: " + e.getMessage());
-            return fallbackNormalize(query);
         }
-    }
     
     /**
      * Validate if a query has correct SQL syntax

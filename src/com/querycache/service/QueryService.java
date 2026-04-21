@@ -20,7 +20,7 @@ public class QueryService {
         this.cache = new QueryPlanCache();
         this.metrics = new CacheMetrics();
         this.parserService = new SQLiteParserService();
-        parserService.setDebug(false);  // turn off parser debug output
+        parserService.setDebug(true);  // turn off parser debug output
     }
     
     public void setCacheEnabled(boolean enabled) { cache.setEnabled(enabled); }
