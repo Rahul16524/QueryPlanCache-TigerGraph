@@ -232,16 +232,10 @@ public QueryPlan execute(String query) {
     return plan;
 } ```
 
-## 📈 Output
-Scenario 1: Without Cache (Baseline)
-https://images/scenario1-without-cache.png
-Figure 1: Eclipse console output showing all queries generating new plans (all MISS) with different Plan IDs
-
-Output :
 ```
-text
-📌 SCENARIO 1: WITHOUT CACHE (Baseline)
 
+### 📌 SCENARIO 1: WITHOUT CACHE (Baseline)
+```
   Q1: SELECT * FROM users WHERE id = 1
       Pattern: Users by ID (Pattern 1)
 
@@ -265,11 +259,11 @@ text
   • Avg Time/Query: 88.29 ms
 ``` 
 
-Scenario 2: With Cache (Demonstrating Reuse)
+### Scenario 2: With Cache (Demonstrating Reuse)
 
-
-Output :
 ```
+Output :
+
 📌 SCENARIO 2: WITH CACHE
 
 
@@ -286,11 +280,9 @@ Output :
       ✅ CACHE HIT - Reused plan (Accessed 1 times)
       📊 Plan ID: 0753b210 | Cost:  25.00 | Time:   2 ms
       🔍 Normalized: select * from users where id = ?  
-      ...
+```
 
-```
-```
-📊 METRICS:
+### 📊 METRICS:
 ```
 
   • Total Execution Time: 551 ms
@@ -302,12 +294,9 @@ Output :
     • Total cached plans: 9
 ```
 
-Scenario 3: Schema Change (Cache Invalidation)
-
+## Scenario 3: Schema Change (Cache Invalidation)
+``` 
 Output :
-
-text
-📌 SCENARIO 3: SCHEMA CHANGE
 
 ``` 
 ⚙️  Mode: Cache ENABLED + Schema Change
@@ -361,36 +350,35 @@ text
    Comparing: WITHOUT CACHE vs WITH CACHE
    (Both scenarios use same queries with no schema changes)
 
-Scenario                                 Total Time       Avg Time/Query       Hit Ratio         Speedup
-───────────────────────────────────────────────────────────────────────────────────────────────
-1. WITHOUT CACHE                          1501 ms           88.29 ms            N/A            1.0x
-2. WITH CACHE                              551 ms           32.41 ms          47.1%            2.7x
-───────────────────────────────────────────────────────────────────────────────────────────────
+| Scenario | Total Time | Avg Time/Query | Hit Ratio | Speedup |
+|----------|------------|----------------|-----------|---------|
+| 1. WITHOUT CACHE | 1501 ms | 88.29 ms | N/A | 1.0x |
+| 2. WITH CACHE | 551 ms | 32.41 ms | 47.1% | 2.7x |
 
 📈 PERFORMANCE IMPROVEMENT: 63.3% faster with cache
 ⚡ SPEEDUP FACTOR: 2.7x (55.9 ms saved per query on average)
 ✅ CACHE EFFICIENCY: 47.1% hit rate across 17 queries
+```
 
-📊 Per-Query Breakdown (Scenario 1 vs 2):
-  Q#   Query Pattern                                 No Cache (ms)   With Cache (ms)
-  ───────────────────────────────────────────────────────────────────────────────
-  1    Users by ID (Pattern 1)                       377             49              ❌ MISS
-  2    Users by ID (Pattern 1 - same)                61              2               ✅ HIT
-  3    Users by ID (Pattern 1 - same)                57              2               ✅ HIT
-  4    Users by ID (Pattern 1 - same)                71              1               ✅ HIT
-  5    Products price > (Pattern 2)                  52              55              ❌ MISS
-  6    Products price < (Pattern 3 - different)      76              52              ❌ MISS
-  7    Products price = (Pattern 4 - different)      69              60              ❌ MISS
-  8    Users by name (Pattern 5)                     61              56              ❌ MISS
-  9    Users by name (Pattern 5 - same)              59              3               ✅ HIT
-  10   Users by name (Pattern 5 - same)              76              2               ✅ HIT
-  11   JOIN orders/customers (Pattern 6)             106             66              ❌ MISS
-  12   JOIN orders/customers (Pattern 6 - same)      54              6               ✅ HIT
-  13   Aggregate GROUP BY (Pattern 7)                56              48              ❌ MISS
-  14   Aggregate GROUP BY (Pattern 7 - same)         61              2               ✅ HIT
-  15   Subquery IN (Pattern 8)                       71              62              ❌ MISS
-  16   ORDER BY with LIMIT (Pattern 9)               67              56              ❌ MISS
-  17   ORDER BY with LIMIT (Pattern 9 - same)        66              2               ✅ HIT
+| Q# | Query Pattern | No Cache (ms) | With Cache (ms) | Cache Status |
+|----|--------------|---------------|-----------------|--------------|
+| 1 | Users by ID (Pattern 1) | 377 | 49 | ❌ MISS |
+| 2 | Users by ID (Pattern 1 - same) | 61 | 2 | ✅ HIT |
+| 3 | Users by ID (Pattern 1 - same) | 57 | 2 | ✅ HIT |
+| 4 | Users by ID (Pattern 1 - same) | 71 | 1 | ✅ HIT |
+| 5 | Products price > (Pattern 2) | 52 | 55 | ❌ MISS |
+| 6 | Products price < (Pattern 3 - different) | 76 | 52 | ❌ MISS |
+| 7 | Products price = (Pattern 4 - different) | 69 | 60 | ❌ MISS |
+| 8 | Users by name (Pattern 5) | 61 | 56 | ❌ MISS |
+| 9 | Users by name (Pattern 5 - same) | 59 | 3 | ✅ HIT |
+| 10 | Users by name (Pattern 5 - same) | 76 | 2 | ✅ HIT |
+| 11 | JOIN orders/customers (Pattern 6) | 106 | 66 | ❌ MISS |
+| 12 | JOIN orders/customers (Pattern 6 - same) | 54 | 6 | ✅ HIT |
+| 13 | Aggregate GROUP BY (Pattern 7) | 56 | 48 | ❌ MISS |
+| 14 | Aggregate GROUP BY (Pattern 7 - same) | 61 | 2 | ✅ HIT |
+| 15 | Subquery IN (Pattern 8) | 71 | 62 | ❌ MISS |
+| 16 | ORDER BY with LIMIT (Pattern 9) | 67 | 56 | ❌ MISS |
+| 17 | ORDER BY with LIMIT (Pattern 9 - same) | 66 | 2 | ✅ HIT |
 
 
 ```
@@ -411,6 +399,7 @@ Step 3: Run the Test Suite
 java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
 Step 4: Run Demo Application
+```
 ```
 java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
 ```
