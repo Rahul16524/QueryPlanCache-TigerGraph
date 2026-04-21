@@ -868,7 +868,7 @@ Output :
 | 17 | ORDER BY with LIMIT (Pattern 9 - same)       | 34            | 1               | ✅ HIT   |
 
 
-```
+
 
 🚀 How to Run
 Step 1: Generate ANTLR Parser Files
