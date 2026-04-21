@@ -136,5 +136,278 @@ SQL Query Input (SELECT * FROM users WHERE id = 101)
 │ • Value: QueryPlan (ID, cost, tables, version) │
 │ • Invalidation: Remove plans when schema changes │
 └─────────────────────────────────────────────────────────────┘
+
+## 📊 ANTLR Parse Tree Example
+
+**Input Query:** `SELECT name FROM users WHERE id = 101`
+
 ```
-give this in markupna then I can put in readme
+sql_stmt_list
+└── sql_stmt
+└── select_stmt
+├── select_core
+│ ├── SELECT
+│ ├── result_column
+│ │ └── name
+│ ├── FROM
+│ ├── table_or_subquery
+│ │ └── users
+│ ├── WHERE
+│ └── expr
+│ ├── column_name → id
+│ ├── =
+│ └── literal_value → 101 ← REPLACED WITH ?
+└── SEMI
+```
+
+
+## 🔄 Core Pseudo Java Code
+
+### Query Normalization with Visitor Pattern
+
+```java
+public class QueryVisitor extends SQLiteBaseVisitor<String> {
+    
+    @Override
+    public String visitExpr(SQLiteParser.ExprContext ctx) {
+        // Replace literals (numbers, strings) with '?'
+        if (ctx.literal_value() != null) {
+            return "?";
+        }
+        
+        // Preserve binary operations (>, <, =, AND, OR)
+        if (ctx.getChildCount() == 3) {
+            String left = visit(ctx.expr(0));
+            String operator = ctx.getChild(1).getText();
+            String right = visit(ctx.expr(2));
+            return left + " " + operator + " " + right;
+        }
+        
+        return visitChildren(ctx);
+    }
+}
+
+## Cache Management
+
+```
+public class QueryPlanCache {
+    private final Map<String, QueryPlan> cache = new ConcurrentHashMap<>();
+    private final Map<String, Integer> schemaVersions = new ConcurrentHashMap<>();
+    
+    public QueryPlan get(String normalizedQuery) {
+        QueryPlan plan = cache.get(normalizedQuery);
+        if (plan != null && isValid(plan)) {
+            return plan;  // ✅ CACHE HIT
+        }
+        return null;      // ❌ CACHE MISS
+    }
+    
+    public void invalidateForTable(String tableName) {
+        schemaVersions.merge(tableName, 1, Integer::sum);
+        cache.entrySet().removeIf(entry -> 
+            entry.getValue().getTablesAccessed().contains(tableName)
+        );
+    }
+}```
+
+## Query Service with Cache Logic
+```
+public QueryPlan execute(String query) {
+    String normalizedQuery = parser.normalizeQuery(query);
+    QueryPlan plan = cache.get(normalizedQuery);
+    
+    if (plan != null) {
+        // ✅ CACHE HIT - Reuse existing plan (1-3 ms)
+        return plan;
+    }
+    
+    // ❌ CACHE MISS - Generate new plan (45-85 ms)
+    plan = generateMockPlan(query);
+    cache.put(normalizedQuery, plan);
+    return plan;
+} ```
+
+## 📈 Output
+Scenario 1: Without Cache (Baseline)
+https://images/scenario1-without-cache.png
+Figure 1: Eclipse console output showing all queries generating new plans (all MISS) with different Plan IDs
+
+Output :
+```
+text
+📌 SCENARIO 1: WITHOUT CACHE (Baseline)
+
+  Q1: SELECT * FROM users WHERE id = 1
+      Pattern: Users by ID (Pattern 1)
+
+      🔄 Generated new plan (cache disabled)
+      📊 Plan ID: 482d478d | Cost:  25.00 | Time: 377 ms
+      🔍 Normalized: select * from users where id = ?
+
+  Q2: SELECT * FROM users WHERE id = 2
+      Pattern: Users by ID (Pattern 1 - same)
+
+      🔄 Generated new plan (cache disabled)
+      📊 Plan ID: 6aaffba0 | Cost:  25.00 | Time:  61 ms
+      🔍 Normalized: select * from users where id = ?
+```
+
+📊 SCENARIO 1 METRICS:
+```
+  • Total Execution Time: 1501 ms
+  • Total Queries: 17
+  • Plans Generated: 17 (100%)
+  • Avg Time/Query: 88.29 ms
+``` 
+
+Scenario 2: With Cache (Demonstrating Reuse)
+
+
+Output :
+```
+📌 SCENARIO 2: WITH CACHE
+
+
+  Q1: SELECT * FROM users WHERE id = 1
+      Pattern: Users by ID (Pattern 1)
+
+      ❌ CACHE MISS - Generated new plan
+      📊 Plan ID: 0753b210 | Cost:  25.00 | Time:  49 ms
+      🔍 Normalized: select * from users where id = ?
+
+  Q2: SELECT * FROM users WHERE id = 2
+      Pattern: Users by ID (Pattern 1 - same)
+
+      ✅ CACHE HIT - Reused plan (Accessed 1 times)
+      📊 Plan ID: 0753b210 | Cost:  25.00 | Time:   2 ms
+      🔍 Normalized: select * from users where id = ?  
+      ...
+
+```
+```
+📊 METRICS:
+```
+
+  • Total Execution Time: 551 ms
+  • Cache Hits: 8 | Cache Misses: 9
+  • Hit Ratio: 47.1% | Miss Ratio: 52.9%
+  • Avg Time/Query: 32.41 ms
+
+  📦 Cache Contents:
+    • Total cached plans: 9
+```
+
+Scenario 3: Schema Change (Cache Invalidation)
+
+Output :
+
+text
+📌 SCENARIO 3: SCHEMA CHANGE
+
+``` 
+⚙️  Mode: Cache ENABLED + Schema Change
+📝 Behavior: Cache invalidated when schema changes
+
+────────────────────────────────────────────────────────────────────────────────
+  ⚙️ Cache ENABLED
+  🗑️ Cache cleared completely
+
+  🟢 PHASE 1: First execution (cache miss)
+  ─────────────────────────────────────────────
+
+    Query: SELECT * FROM orders WHERE customer_id = 100
+      → ❌ MISS (Plan generated) | Plan: 51fc27a0 | Time: 70 ms
+      🔍 Normalized: select * from orders where customer_id = ?
+
+  🟢 PHASE 2: Second execution (cache hit)
+  ─────────────────────────────────────────────
+
+    Query: SELECT * FROM orders WHERE customer_id = 100
+      → ✅ HIT (Cached plan reused) | Plan: 51fc27a0 | Time: 2 ms
+      🔍 Normalized: select * from orders where customer_id = ?
+
+  🔄 PHASE 3: Schema change detected
+  ─────────────────────────────────────────────
+  📝 ALTER TABLE orders ADD COLUMN discount DECIMAL(5,2)
+
+  🗑️ Invalidated 1 cache entries for table: orders
+  ⚡ Cache invalidated in 0 ms
+  📦 Cache size after invalidation: 0
+
+  🟡 PHASE 4: Execute after schema change (cache miss & rebuild)
+  ─────────────────────────────────────────────────────────
+
+    Query: SELECT * FROM orders WHERE customer_id = 100
+      → 🔄 MISS (Regenerated with new schema) | Plan: 774b68eb | Time: 52 ms
+      🔍 Normalized: select * from orders where customer_id = ?
+
+  🟢 PHASE 5: Execute again (cache hit after rebuild)
+  ─────────────────────────────────────────────────
+
+    Query: SELECT * FROM orders WHERE customer_id = 100
+      → ✅ HIT (New cached plan reused) | Plan: 774b68eb | Time: 1 ms
+      🔍 Normalized: select * from orders where customer_id = ?
+    ```
+
+## Final Performance Comparison
+================================================================================
+```
+📈 CACHE PERFORMANCE (Fair Comparison):
+   Comparing: WITHOUT CACHE vs WITH CACHE
+   (Both scenarios use same queries with no schema changes)
+
+Scenario                                 Total Time       Avg Time/Query       Hit Ratio         Speedup
+───────────────────────────────────────────────────────────────────────────────────────────────
+1. WITHOUT CACHE                          1501 ms           88.29 ms            N/A            1.0x
+2. WITH CACHE                              551 ms           32.41 ms          47.1%            2.7x
+───────────────────────────────────────────────────────────────────────────────────────────────
+
+📈 PERFORMANCE IMPROVEMENT: 63.3% faster with cache
+⚡ SPEEDUP FACTOR: 2.7x (55.9 ms saved per query on average)
+✅ CACHE EFFICIENCY: 47.1% hit rate across 17 queries
+
+📊 Per-Query Breakdown (Scenario 1 vs 2):
+  Q#   Query Pattern                                 No Cache (ms)   With Cache (ms)
+  ───────────────────────────────────────────────────────────────────────────────
+  1    Users by ID (Pattern 1)                       377             49              ❌ MISS
+  2    Users by ID (Pattern 1 - same)                61              2               ✅ HIT
+  3    Users by ID (Pattern 1 - same)                57              2               ✅ HIT
+  4    Users by ID (Pattern 1 - same)                71              1               ✅ HIT
+  5    Products price > (Pattern 2)                  52              55              ❌ MISS
+  6    Products price < (Pattern 3 - different)      76              52              ❌ MISS
+  7    Products price = (Pattern 4 - different)      69              60              ❌ MISS
+  8    Users by name (Pattern 5)                     61              56              ❌ MISS
+  9    Users by name (Pattern 5 - same)              59              3               ✅ HIT
+  10   Users by name (Pattern 5 - same)              76              2               ✅ HIT
+  11   JOIN orders/customers (Pattern 6)             106             66              ❌ MISS
+  12   JOIN orders/customers (Pattern 6 - same)      54              6               ✅ HIT
+  13   Aggregate GROUP BY (Pattern 7)                56              48              ❌ MISS
+  14   Aggregate GROUP BY (Pattern 7 - same)         61              2               ✅ HIT
+  15   Subquery IN (Pattern 8)                       71              62              ❌ MISS
+  16   ORDER BY with LIMIT (Pattern 9)               67              56              ❌ MISS
+  17   ORDER BY with LIMIT (Pattern 9 - same)        66              2               ✅ HIT
+
+
+```
+
+🚀 How to Run
+Step 1: Generate ANTLR Parser Files
+```
+java -Xmx500M -cp "antlr-4.13.1-complete.jar" org.antlr.v4.Tool ^
+  -Dlanguage=Java -visitor -listener -o src/main/java/com/querycache/parser ^
+  src/main/java/com/querycache/parser/SQLite.g4
+```
+Step 2: Compile All Java Files
+```
+javac -cp ".;antlr-4.13.1-complete.jar" src/main/java/com/querycache/**/*.java
+```
+Step 3: Run the Test Suite
+```
+java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
+```
+Step 4: Run Demo Application
+```
+java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
+```
+
+
