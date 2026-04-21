@@ -37,6 +37,28 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 ---
 
+🚀 How to Run
+Step 1: Generate ANTLR Parser Files
+```
+java -Xmx500M -cp "antlr-4.13.1-complete.jar" org.antlr.v4.Tool ^
+  -Dlanguage=Java -visitor -listener -o src/main/java/com/querycache/parser ^
+  src/main/java/com/querycache/parser/SQLite.g4
+```
+Step 2: Compile All Java Files
+```
+javac -cp ".;antlr-4.13.1-complete.jar" src/main/java/com/querycache/**/*.java
+```
+Step 3: Run the Test Suite
+```
+java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
+```
+Step 4: Run Demo Application
+```
+java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
+```
+
+---
+
 ## Overview
 The cache mechanism uses a multi-layered approach combining query normalization, schema-aware invalidation, and adaptive cache management. Each design decision addresses specific challenges in real-world query caching.
 
@@ -872,27 +894,25 @@ Output :
 | 16 | ORDER BY with LIMIT (Pattern 9)              | 29            | 27              | ❌ MISS  |
 | 17 | ORDER BY with LIMIT (Pattern 9 - same)       | 34            | 1               | ✅ HIT   |
 
-
-
-
-🚀 How to Run
-Step 1: Generate ANTLR Parser Files
-```
-java -Xmx500M -cp "antlr-4.13.1-complete.jar" org.antlr.v4.Tool ^
-  -Dlanguage=Java -visitor -listener -o src/main/java/com/querycache/parser ^
-  src/main/java/com/querycache/parser/SQLite.g4
-```
-Step 2: Compile All Java Files
-```
-javac -cp ".;antlr-4.13.1-complete.jar" src/main/java/com/querycache/**/*.java
-```
-Step 3: Run the Test Suite
-```
-java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
-```
-Step 4: Run Demo Application
-```
-java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
-```
 ---
+## AI Policy Usage
 
+### AI Tools Used in Development
+
+This project was developed with limited assistance from AI tools, primarily for structural guidance and documentation clarity. All core logic, design flow, and implementation decisions were created independently.
+
+### Code Generation & Architecture
+
+- Used AI to understand **ANTLR parse tree traversal** concepts and explore possible implementation patterns
+- Took code templates and structure suggestions for **mock plan generation**, **complexity scoring**, and **testing setup** — but core logic and implementation were self-designed
+- Received minor syntax corrections and readability improvements
+- Independently implemented **cache eviction policies (LRU/LFU)** and **query normalization logic**
+- Self-designed performance comparison logic including hit/miss ratio and speedup factor calculations
+
+### Documentation
+
+- AI assisted in drafting technical explanations and architectural documentation for better clarity
+- Helped structure the README and create diagram outlines for visualization
+- Received formatting help for performance comparison tables and metrics breakdown
+
+---
