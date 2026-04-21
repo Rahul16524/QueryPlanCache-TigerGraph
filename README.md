@@ -141,26 +141,27 @@ SQL Query Input (SELECT * FROM users WHERE id = 101)
 
 **Input Query:** `SELECT name FROM users WHERE id = 101`
 
-```
+## SQL Parsing Example
 
+The following syntax tree represents a parsed `SELECT` statement before and after parameterization:
+
+```plaintext
 sql_stmt_list
 └── sql_stmt
-└── select_stmt
-├── select_core
-│ ├── SELECT
-│ ├── result_column
-│ │ └── name
-│ ├── FROM
-│ ├── table_or_subquery
-│ │ └── users
-│ ├── WHERE
-│ └── expr
-│ ├── column_name → id
-│ ├── =
-│ └── literal_value → 101 ← REPLACED WITH ?
-└── SEMI
-
-```
+    └── select_stmt
+        ├── select_core
+        │   ├── SELECT
+        │   ├── result_column
+        │   │   └── name
+        │   ├── FROM
+        │   ├── table_or_subquery
+        │   │   └── users
+        │   ├── WHERE
+        │   └── expr
+        │       ├── column_name → id
+        │       ├── =
+        │       └── literal_value → 101 ← REPLACED WITH ?
+        └── SEMI
 
 
 ## 🔄 Core Pseudo Java Code
