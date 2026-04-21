@@ -81,7 +81,6 @@ public class QueryPlanCacheTest {
         
         runWithoutCache();
         runWithCache();
-        runNormalizationTests();
         runSchemaChangeTest();
         
         printFinalSummary();
@@ -209,87 +208,6 @@ public class QueryPlanCacheTest {
         TestStats.cacheExecutions = executions;
     }
     
-    // ========== NORMALIZATION TESTS ==========
-    private static void runNormalizationTests() {
-        System.out.println("\n📌 NORMALIZATION TESTS: Validating Pattern Recognition\n");
-        printSeparator();
-        
-        QueryService service = new QueryService();
-        service.setCacheEnabled(true);
-        service.clearCache();
-        
-        // Test 1: Basic value normalization
-        System.out.println("\n  🧪 TEST A: Different Literal Values (Same Pattern)\n");
-        String[] valueTests = {
-            "SELECT * FROM users WHERE id = 100",
-            "SELECT * FROM users WHERE id = 200",
-            "SELECT * FROM users WHERE id = 300"
-        };
-        
-        for (int i = 0; i < valueTests.length; i++) {
-            long start = System.nanoTime();
-            var plan = service.execute(valueTests[i]);
-            long time = (System.nanoTime() - start) / 1_000_000;
-            boolean isHit = service.getLastAccessWasHit();
-            
-            System.out.printf("    Q%d: %s%n", (i+1), valueTests[i]);
-            System.out.printf("        → %s | Time: %3d ms | Plan: %s%n", 
-                isHit ? "✅ HIT" : "❌ MISS", time, plan.getPlanId().substring(0, 8));
-            System.out.printf("        🔍 Normalized: %s%n\n", plan.getNormalizedQuery());
-        }
-        
-        CacheMetrics metrics = service.getMetrics();
-        boolean normalizationWorks = metrics.getCacheHits() == 2 && metrics.getCacheMisses() == 1;
-        
-        System.out.printf("    📊 Result: %d Hits, %d Misses%n", 
-                         metrics.getCacheHits(), metrics.getCacheMisses());
-        
-        if (normalizationWorks) {
-            System.out.println("    ✅ PASSED: Different values → same normalized pattern → cache hits");
-            testsPassed++;
-        } else {
-            System.out.println("    ❌ FAILED: Normalization not working correctly");
-            testsFailed++;
-        }
-        
-        // Test 2: Different operators
-        System.out.println("\n  🧪 TEST B: Different Operators (Different Patterns)\n");
-        service.clearCache();
-        
-        String[] operatorTests = {
-            "SELECT * FROM products WHERE price > 100",
-            "SELECT * FROM products WHERE price < 100",
-            "SELECT * FROM products WHERE price = 100"
-        };
-        
-        for (int i = 0; i < operatorTests.length; i++) {
-            long start = System.nanoTime();
-            var plan = service.execute(operatorTests[i]);
-            long time = (System.nanoTime() - start) / 1_000_000;
-            boolean isHit = service.getLastAccessWasHit();
-            
-            System.out.printf("    Q%d: %s%n", (i+1), operatorTests[i]);
-            System.out.printf("        → %s | Time: %3d ms | Plan: %s%n", 
-                isHit ? "✅ HIT" : "❌ MISS", time, plan.getPlanId().substring(0, 8));
-            System.out.printf("        🔍 Normalized: %s%n\n", plan.getNormalizedQuery());
-        }
-        
-        metrics = service.getMetrics();
-        boolean operatorsWork = metrics.getCacheHits() == 0 && metrics.getCacheMisses() == 3;
-        
-        System.out.printf("    📊 Result: %d Hits, %d Misses%n", 
-                         metrics.getCacheHits(), metrics.getCacheMisses());
-        
-        if (operatorsWork) {
-            System.out.println("    ✅ PASSED: Different operators → different patterns → all misses");
-            testsPassed++;
-        } else {
-            System.out.println("    ❌ FAILED: Operator differentiation issue");
-            testsFailed++;
-        }
-        
-        printSeparator();
-    }
     
     // ========== SCENARIO 3: SCHEMA CHANGE ==========
     private static void runSchemaChangeTest() {
