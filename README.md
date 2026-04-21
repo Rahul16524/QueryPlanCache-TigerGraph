@@ -251,7 +251,7 @@ Why immediate eviction on invalid:
     Keeps cache size accurate
     
     Avoids repeated validation failures for same query
-
+---
 ### 7. Cost Estimation Heuristics
 Goal: Provide realistic cost estimates without actual database statistics.
 
