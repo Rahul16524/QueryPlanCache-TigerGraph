@@ -356,6 +356,7 @@ Table Extraction	Pattern matching	AST traversal	Faster for test workload
 Storage	ConcurrentHashMap	synchronized HashMap	Better concurrency
 
 ## 🔄 Execution Flow
+```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ QUERY EXECUTION FLOW │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -448,6 +449,7 @@ SQL Query Input (SELECT * FROM users WHERE id = 101)
 │ • Value: QueryPlan (ID, cost, tables, version) │
 │ • Invalidation: Remove plans when schema changes │
 └─────────────────────────────────────────────────────────────┘
+```
 ```
 
 ## 📊 ANTLR Parse Tree Example
