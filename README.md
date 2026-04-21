@@ -355,67 +355,62 @@ Cost Estimation	Heuristic weighting	DB statistics	Self-contained
 Table Extraction	Pattern matching	AST traversal	Faster for test workload
 Storage	ConcurrentHashMap	synchronized HashMap	Better concurrency
 
+## 🔄 Execution Flow
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ QUERY EXECUTION FLOW │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-
-
-
-## 💡 Design Strategy
-
-
-### 1. Identifying Similar Queries (Query Normalization)
-
-**Strategy:** Transform constants into placeholders (`?`) so that queries with the same structure but different literal values produce the same normalized form.
-
-**How it works:**
-- Parse SQL query using ANTLR to build Abstract Syntax Tree (AST)
-- Traverse AST using Visitor pattern
-- Replace all literal values (numbers, strings) with `?`
-- Preserve operators, table names, column names, and query structure
-- Convert everything to lowercase for case-insensitive matching
-
-| Original Query | Normalized Query |
-|----------------|------------------|
-| `SELECT * FROM users WHERE id = 101` | `select * from users where id = ?` |
-| `SELECT * FROM users WHERE id = 202` | `select * from users where id = ?` (SAME! Cache Hit) |
-| `SELECT * FROM products WHERE price > 100` | `select * from products where price > ?` |
-
-### 2. Cache Hit vs Cache Miss
-
-| Type | Description | Performance |
-|------|-------------|-------------|
-| **Cache Hit** | Query's normalized form exists in cache | 1-3 ms (30-60x faster) |
-| **Cache Miss** | Query's normalized form NOT in cache | 45-85 ms (must generate plan) |
-
-**Why Cache Hits Matter:**
-- Each cache hit saves 40-80 ms of plan generation time
-- With 1000 queries/second, saving 60 ms = 60 seconds saved per second!
-- Higher hit ratio = better performance
-
-### 3. Cache Structure
-
-| Component | Description |
-|-----------|-------------|
-| **Key** | Normalized query string (e.g., `"select * from users where id = ?"`) |
-| **Value** | QueryPlan object (ID, cost, tables, version, accessCount) |
-| **Storage** | ConcurrentHashMap (thread-safe, O(1) operations) |
-
-### 4. Cache Invalidation Strategy
-
-**Problem:** When table schema changes (`ALTER TABLE`), cached plans become STALE and may produce WRONG results!
-
-**Solution - Table-based Invalidation:**
-
-| Step | Action |
-|------|--------|
-| 1 | Each QueryPlan tracks tables it accesses |
-| 2 | Schema versions maintained per table |
-| 3 | On schema change, increment version for affected table |
-| 4 | Remove all cached plans accessing that table |
-| 5 | Future queries regenerate with new schema |
-
-**Why this approach:** Correctness guaranteed, only invalidates necessary plans, fast O(n) scan.
-
-**Real-world impact:** 1 million queries/day with 47% hit ratio saves ~6.3 hours per day!
+SQL Query: SELECT * FROM users WHERE id = 101
+│
+▼
+┌─────────────────┐
+│ 1. NORMALIZE │
+│ ANTLR + Visitor │
+│ Replace literals│
+│ with '?' │
+└────────┬────────┘
+│
+▼
+"select * from users where id = ?"
+│
+▼
+┌─────────────────┐
+│ 2. CACHE LOOKUP │
+│ ConcurrentHashMap│
+│ .get(key) │
+└────────┬────────┘
+│
+┌───────────────┴───────────────┐
+│ │
+▼ ▼
+┌─────────────────┐ ┌─────────────────┐
+│ CACHE HIT │ │ CACHE MISS │
+│ (Plan exists) │ │ (Plan not found)│
+└────────┬────────┘ └────────┬────────┘
+│ │
+│ ┌─────────┴─────────┐
+│ │ 3. GENERATE PLAN │
+│ │ • UUID.randomUUID │
+│ │ • Calculate cost │
+│ │ • Extract tables │
+│ │ • Thread.sleep() │
+│ └─────────┬─────────┘
+│ │
+│ ┌─────────┴─────────┐
+│ │ 4. STORE IN CACHE │
+│ │ • Check max size │
+│ │ • Evict if needed │
+│ │ • Set schema ver │
+│ └─────────┬─────────┘
+│ │
+└───────────────┬───────────────┘
+│
+▼
+┌─────────────────┐
+│ RETURN PLAN │
+│ (1-3ms on hit, │
+│ 45-85ms on miss)│
+└─────────────────┘
 
 ## 🏗️ System Architecture
 ```
