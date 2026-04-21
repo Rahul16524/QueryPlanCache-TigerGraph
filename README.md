@@ -211,7 +211,8 @@ public class QueryPlanCache {
             entry.getValue().getTablesAccessed().contains(tableName)
         );
     }
-}```
+}
+```
 
 ## Query Service with Cache Logic
 ```
