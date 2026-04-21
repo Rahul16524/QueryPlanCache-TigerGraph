@@ -1,11 +1,10 @@
-📋 Project Overview
+## 📋 Project Overview
 
-This project implements a Query Plan Caching Mechanism in Java that optimizes SQL query execution by storing and reusing execution plans for structurally identical queries. When similar queries with different literal values execute (e.g., SELECT * FROM users WHERE id = 101 and SELECT * FROM users WHERE id = 202), the system recognizes their structural similarity and reuses the cached plan, eliminating redundant parsing and optimization overhead.
+This project implements a Query Plan Caching Mechanism in Java that optimizes SQL query execution by storing and reusing execution plans for structurally identical queries. When similar queries with different literal values execute (e.g., SELECT * FROM users WHERE id = 101 and SELECT * FROM users WHERE id = 202), the system recognizes their structural similarity and reuses the cached plan, eliminating redundant parsing and optimization overhead. This mimics how real database systems like Oracle, PostgreSQL, and MySQL use plan caching to improve query performance.
 
-🎯 Problem Statement
+## 🎯 Problem Statement
 
-In real-world databases, executing queries repeatedly with different parameter values triggers redundant plan generation, wasting computation time. For example, two queries with different parameter values but identical structure may produce identical execution plans — yet most systems will re-plan them each time. This project addresses this inefficiency by implementing a query plan cache that recognizes structural similarity between queries and reuses existing plans.
-
+In real-world databases, executing queries repeatedly with different parameter values triggers redundant plan generation, wasting computation time. For example, an e-commerce application might execute SELECT * FROM orders WHERE customer_id = 101 and SELECT * FROM orders WHERE customer_id = 202 thousands of times per day. Without caching, the database generates a nearly identical execution plan each time, consuming CPU cycles and increasing response time. This project addresses this inefficiency by implementing a query plan cache that recognizes structural similarity between queries and reuses existing plans, demonstrating how production databases achieve high throughput under concurrent query loads.
 
 ## 🔧 Technologies & Tools Used
 
@@ -27,3 +26,25 @@ In real-world databases, executing queries repeatedly with different parameter v
 | **Memory (RAM)** | 512 MB | 1 GB or more | Cache storage and parsing operations |
 | **Disk Space** | 50 MB | 100 MB | Source code and compiled classes |
 | **Operating System** | Windows / Linux / Mac | Any with Java support | Cross-platform compatibility |
+
+
+### Required Files
+antlr-4.13.1-complete.jar - ANTLR runtime for lexer/parser generation
+
+SQLite.g4 - ANTLR grammar file for SQL parsing
+
+💡 Design Strategy
+1. Identifying Similar Queries (Query Normalization)
+Strategy: Transform constants into placeholders (?) so that queries with the same structure but different literal values produce the same normalized form.
+
+How it works:
+
+Parse SQL query using ANTLR to build Abstract Syntax Tree (AST)
+
+Traverse AST using Visitor pattern
+
+Replace all literal values (numbers, strings) with ?
+
+Preserve operators, table names, column names, and query structure
+
+Convert everything to lowercase for case-insensitive matching
