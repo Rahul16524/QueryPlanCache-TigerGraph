@@ -142,6 +142,7 @@ SQL Query Input (SELECT * FROM users WHERE id = 101)
 **Input Query:** `SELECT name FROM users WHERE id = 101`
 
 ```
+
 sql_stmt_list
 └── sql_stmt
 └── select_stmt
@@ -158,6 +159,7 @@ sql_stmt_list
 │ ├── =
 │ └── literal_value → 101 ← REPLACED WITH ?
 └── SEMI
+
 ```
 
 
