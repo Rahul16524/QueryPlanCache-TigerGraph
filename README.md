@@ -295,10 +295,8 @@ Output :
 ```
 
 ## Scenario 3: Schema Change (Cache Invalidation)
-``` 
+```
 Output :
-
-``` 
 ⚙️  Mode: Cache ENABLED + Schema Change
 📝 Behavior: Cache invalidated when schema changes
 
@@ -341,7 +339,7 @@ Output :
     Query: SELECT * FROM orders WHERE customer_id = 100
       → ✅ HIT (New cached plan reused) | Plan: 774b68eb | Time: 1 ms
       🔍 Normalized: select * from orders where customer_id = ?
-    ```
+ ```
 
 ## Final Performance Comparison
 ```
@@ -349,10 +347,10 @@ Output :
    Comparing: WITHOUT CACHE vs WITH CACHE
    (Both scenarios use same queries with no schema changes)
 
-| Scenario | Total Time | Avg Time/Query | Hit Ratio | Speedup |
-|----------|------------|----------------|-----------|---------|
-| 1. WITHOUT CACHE | 1501 ms | 88.29 ms | N/A | 1.0x |
-| 2. WITH CACHE | 551 ms | 32.41 ms | 47.1% | 2.7x |
+| Scenario                 | Total Time | Avg Time/Query | Hit Ratio | Speedup |
+|--------------------------|------------|----------------|-----------|---------|
+| 1. WITHOUT CACHE         | 1501 ms    | 88.29 ms       | N/A       | 1.0x    |
+| 2. WITH CACHE            | 551 ms     | 32.41 ms       | 47.1%     | 2.7x    |
 
 📈 PERFORMANCE IMPROVEMENT: 63.3% faster with cache
 ⚡ SPEEDUP FACTOR: 2.7x (55.9 ms saved per query on average)
