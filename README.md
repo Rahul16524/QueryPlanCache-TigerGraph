@@ -49,3 +49,9 @@ In real-world databases, executing queries repeatedly with different parameter v
 - Convert everything to lowercase for case-insensitive matching
 
 **Example:**
+
+Original: SELECT * FROM users WHERE id = 101
+Normalized: select * from users where id = ?
+
+Original: SELECT * FROM users WHERE id = 202
+Normalized: select * from users where id = ? (SAME! Cache Hit)
