@@ -1,4 +1,4 @@
-# Query Plan Cache for Interpreted Queries - Java Implementation
+# Query Plan Cache  - Java Implementation
 
 ## 📋 Project Overview
 
