@@ -185,7 +185,7 @@ Future queries on "orders" → CACHE MISS → Generate new plan
 Future queries on "users" only → CACHE HIT (unaffected)
 ```
 
-5. Cache Eviction Policy
+### 5. Cache Eviction Policy
 Goal: Prevent unbounded cache growth while keeping frequently used plans.
 
 Approach - Simplified LRU:
@@ -224,7 +224,7 @@ Limitations acknowledged:
     Not true LRU (iteration order is not guaranteed by ConcurrentHashMap)
     Acceptable for demo/prototype; production would need priority queue
 
-6. Two-Phase Cache Validation
+### 6. Two-Phase Cache Validation
 Goal: Prevent stale plan accumulation and ensure correctness.
 
 Approach:
@@ -258,7 +258,7 @@ Why immediate eviction on invalid:
     
     Avoids repeated validation failures for same query
 
-7. Cost Estimation Heuristics
+### 7. Cost Estimation Heuristics
 Goal: Provide realistic cost estimates without actual database statistics.
 
 Approach - Operation-Based Weighting:
@@ -281,7 +281,7 @@ SELECT * FROM orders o JOIN users u ON o.user_id = u.id WHERE o.total > 1000
 
 Cost = 10 (base) + 25 (JOIN) + 5 (WHERE) + 20 (orders table) + 10 (users table) = 70.0
 
-8. Table Extraction Method
+### 8. Table Extraction Method
 Goal: Identify which tables a query accesses for invalidation.
 
 Approach - Pattern Matching over AST Traversal:
@@ -306,15 +306,17 @@ private void extractTables(String query, QueryPlan plan) {
 }
 ```
 
-9. Plan Generation Simulation
+### 9. Plan Generation Simulation
 Goal: Simulate realistic plan generation costs without actual database.
 
 Approach - Randomized Delay:
 
 ```
-Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 20));
-// PLAN_GEN_BASE_TIME = 45 ms
-// Random adds 0-20 ms → Total 45-65 ms
+private static final int PLAN_GEN_BASE_TIME = 10;  // 10ms base (not 45ms!)
+
+// Simulate plan generation (10-45ms range)
+Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 35));
+// Range: 10ms to 45ms
 ```
 
 Why this range:
@@ -325,7 +327,7 @@ Why this range:
     
     Matches real database behavior (PostgreSQL: 30-80ms for complex queries)
 
-10. Metrics Collection
+### 10. Metrics Collection
 Goal: Track cache effectiveness for performance analysis.
 
 Metrics Tracked:
@@ -579,22 +581,63 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
 
 ```
 public class QueryPlanCache {
-    private final Map<String, QueryPlan> cache = new ConcurrentHashMap<>();
-    private final Map<String, Integer> schemaVersions = new ConcurrentHashMap<>();
+    private final Map<String, QueryPlan> cache;           // ConcurrentHashMap
+    private final Map<String, Long> accessTimestamps;     // Track last access time for LRU
+    private final Map<String, Integer> schemaVersions;    // Per-table versions
+    private final int maxSize;                            // LRU limit (default 100)
+    private boolean enabled = true;
     
-    public QueryPlan get(String normalizedQuery) {
-        QueryPlan plan = cache.get(normalizedQuery);
-        if (plan != null && isValid(plan)) {
-            return plan;  // ✅ CACHE HIT
-        }
-        return null;      // ❌ CACHE MISS
+    public QueryPlanCache(int maxSize) {
+        this.cache = new ConcurrentHashMap<>();
+        this.accessTimestamps = new ConcurrentHashMap<>();  // ← IMPORTANT
+        this.schemaVersions = new ConcurrentHashMap<>();
+        this.maxSize = maxSize;
     }
     
-    public void invalidateForTable(String tableName) {
-        schemaVersions.merge(tableName, 1, Integer::sum);
-        cache.entrySet().removeIf(entry -> 
-            entry.getValue().getTablesAccessed().contains(tableName)
-        );
+    public QueryPlan get(String key) {
+        if (!enabled) return null;
+        QueryPlan plan = cache.get(key);
+        if (plan != null) {
+            // Update timestamp on every access for true LRU
+            accessTimestamps.put(key, System.currentTimeMillis());
+        }
+        return plan;
+    }
+    
+    public void put(String key, QueryPlan plan) {
+        if (!enabled) return;
+        
+        // LRU eviction if cache is full
+        if (cache.size() >= maxSize) {
+            evictLRU();
+        }
+        
+        // Tag plan with current schema version
+        int currentVersion = getCurrentSchemaVersion(plan.getTablesAccessed());
+        plan.setSchemaVersion(currentVersion);
+        
+        cache.put(key, plan);
+        accessTimestamps.put(key, System.currentTimeMillis());  // Record insertion time
+    }
+    
+    // TRUE LRU implementation - finds oldest by timestamp
+    private void evictLRU() {
+        if (cache.isEmpty()) return;
+        
+        String oldestKey = null;
+        long oldestTime = Long.MAX_VALUE;
+        
+        for (Map.Entry<String, Long> entry : accessTimestamps.entrySet()) {
+            if (entry.getValue() < oldestTime) {
+                oldestTime = entry.getValue();
+                oldestKey = entry.getKey();
+            }
+        }
+        
+        if (oldestKey != null) {
+            cache.remove(oldestKey);
+            accessTimestamps.remove(oldestKey);
+        }
     }
 }
 ```
@@ -602,19 +645,31 @@ public class QueryPlanCache {
 ## Query Service with Cache Logic
 ```
 public QueryPlan execute(String query) {
-    String normalizedQuery = parser.normalizeQuery(query);
+    String normalizedQuery = parserService.normalizeQuery(query);
     QueryPlan plan = cache.get(normalizedQuery);
     
-    if (plan != null) {
-        // ✅ CACHE HIT - Reuse existing plan (1-3 ms)
+    // ← TWO-PHASE VALIDATION
+    if (plan != null && cache.isValid(normalizedQuery, plan)) {
+        // CACHE HIT
+        lastAccessWasHit = true;
+        plan.incrementAccessCount();
         return plan;
     }
     
-    // ❌ CACHE MISS - Generate new plan (45-85 ms)
-    plan = generateMockPlan(query);
+    // CACHE MISS or INVALID
+    lastAccessWasHit = false;
+    
+    // ← CLEAN UP STALE ENTRY
+    if (plan != null && !cache.isValid(normalizedQuery, plan)) {
+        cache.evict(normalizedQuery);
+    }
+    
+    // Generate new plan
+    plan = generateNewPlan(query);
     cache.put(normalizedQuery, plan);
     return plan;
-} ```
+}
+ ```
 
 ```
 
