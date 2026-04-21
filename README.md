@@ -163,13 +163,13 @@ sql_stmt_list
         │       ├── =
         │       └── literal_value → 101 ← REPLACED WITH ?
         └── SEMI
-
+```
 
 ## 🔄 Core Pseudo Java Code
 
 ### Query Normalization with Visitor Pattern
 
-```java
+```
 public class QueryVisitor extends SQLiteBaseVisitor<String> {
     
     @Override
@@ -190,7 +190,7 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return visitChildren(ctx);
     }
 }
-
+```
 ## Cache Management
 
 ```
