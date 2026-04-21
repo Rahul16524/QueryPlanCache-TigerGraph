@@ -37,7 +37,8 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 ---
 
-🚀 How to Run
+## 🚀 How to Run
+
 Step 1: Generate ANTLR Parser Files
 ```
 java -Xmx500M -cp "antlr-4.13.1-complete.jar" org.antlr.v4.Tool ^
