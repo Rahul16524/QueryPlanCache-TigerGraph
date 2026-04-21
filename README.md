@@ -519,43 +519,7 @@ SQL Query: SELECT * FROM users WHERE id = 101
 │  [File: ResultSetFormatter.java, Line: 45] - Format results for display                         │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-## 🏗️ System Architecture
-```
-SQL Query Input (SELECT * FROM users WHERE id = 101)
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ ANTLR Lexer & Parser │
-│ • Tokenizes SQL into lexemes │
-│ • Builds Abstract Syntax Tree (AST) │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ QueryVisitor (Normalization) │
-│ • Walks AST using Visitor pattern │
-│ • Replaces literals (101, 'John') with '?' │
-│ • Returns: "select * from users where id = ?" │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ QueryService (Cache Logic) │
-│ • Uses normalized string as cache key │
-│ • Checks cache: exists? → HIT, else → MISS │
-│ • On HIT: Return cached plan (1-3 ms) │
-│ • On MISS: Generate new plan (45-85 ms) │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ QueryPlanCache (Storage) │
-│ • ConcurrentHashMap for thread-safe access │
-│ • Key: normalized query string │
-│ • Value: QueryPlan (ID, cost, tables, version) │
-│ • Invalidation: Remove plans when schema changes │
-└─────────────────────────────────────────────────────────────┘
-```
+
 ```
 
 ## 📊 ANTLR Parse Tree Example
