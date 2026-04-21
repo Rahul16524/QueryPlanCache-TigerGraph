@@ -136,6 +136,7 @@ SQL Query Input (SELECT * FROM users WHERE id = 101)
 │ • Value: QueryPlan (ID, cost, tables, version) │
 │ • Invalidation: Remove plans when schema changes │
 └─────────────────────────────────────────────────────────────┘
+```
 
 ## 📊 ANTLR Parse Tree Example
 
