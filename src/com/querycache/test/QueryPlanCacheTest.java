@@ -12,11 +12,8 @@ import java.util.*;
  * Tests include:
  * 1. Performance WITHOUT caching (baseline)
  * 2. Performance WITH caching (benefits)
- * 3. Query normalization validation
- * 4. Schema change invalidation
+ * 3. Schema change invalidation
  * 
- * @author QueryCache Team
- * @version 1.0
  */
 public class QueryPlanCacheTest {
     
