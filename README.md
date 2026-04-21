@@ -344,7 +344,6 @@ Output :
     ```
 
 ## Final Performance Comparison
-================================================================================
 ```
 📈 CACHE PERFORMANCE (Fair Comparison):
    Comparing: WITHOUT CACHE vs WITH CACHE
