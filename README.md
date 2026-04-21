@@ -723,14 +723,14 @@ public QueryPlan execute(String query) {
       Pattern: Users by ID (Pattern 1)
 
       🔄 Generated new plan (cache disabled)
-      📊 Plan ID: 482d478d | Cost:  25.00 | Time: 377 ms
+      📊 Plan ID: 22e48925 | Cost:  25.00 | Time: 1716 ms
       🔍 Normalized: select * from users where id = ?
 
   Q2: SELECT * FROM users WHERE id = 2
       Pattern: Users by ID (Pattern 1 - same)
 
       🔄 Generated new plan (cache disabled)
-      📊 Plan ID: 6aaffba0 | Cost:  25.00 | Time:  61 ms
+      📊 Plan ID: 86b4d92e | Cost:  25.00 | Time:  33 ms
       🔍 Normalized: select * from users where id = ?
 ```
 
@@ -756,15 +756,15 @@ Output :
       Pattern: Users by ID (Pattern 1)
 
       ❌ CACHE MISS - Generated new plan
-      📊 Plan ID: 0753b210 | Cost:  25.00 | Time:  49 ms
+      📊 Plan ID: 4b96e706 | Cost:  25.00 | Time:  38 ms
       🔍 Normalized: select * from users where id = ?
 
   Q2: SELECT * FROM users WHERE id = 2
       Pattern: Users by ID (Pattern 1 - same)
 
       ✅ CACHE HIT - Reused plan (Accessed 1 times)
-      📊 Plan ID: 0753b210 | Cost:  25.00 | Time:   2 ms
-      🔍 Normalized: select * from users where id = ?  
+      📊 Plan ID: 4b96e706 | Cost:  25.00 | Time:   1 ms
+      🔍 Normalized: select * from users where id = ?
 ```
 
 ### 📊 METRICS:
@@ -789,18 +789,18 @@ Output :
   ⚙️ Cache ENABLED
   🗑️ Cache cleared completely
 
-  🟢 PHASE 1: First execution (cache miss)
+🟢 PHASE 1: First execution (cache miss)
   ─────────────────────────────────────────────
 
     Query: SELECT * FROM orders WHERE customer_id = 100
-      → ❌ MISS (Plan generated) | Plan: 51fc27a0 | Time: 70 ms
+      → ❌ MISS (Plan generated) | Plan: e50088ff | Time: 43 ms
       🔍 Normalized: select * from orders where customer_id = ?
 
   🟢 PHASE 2: Second execution (cache hit)
   ─────────────────────────────────────────────
 
     Query: SELECT * FROM orders WHERE customer_id = 100
-      → ✅ HIT (Cached plan reused) | Plan: 51fc27a0 | Time: 2 ms
+      → ✅ HIT (Cached plan reused) | Plan: e50088ff | Time: 1 ms
       🔍 Normalized: select * from orders where customer_id = ?
 
   🔄 PHASE 3: Schema change detected
@@ -815,15 +815,16 @@ Output :
   ─────────────────────────────────────────────────────────
 
     Query: SELECT * FROM orders WHERE customer_id = 100
-      → 🔄 MISS (Regenerated with new schema) | Plan: 774b68eb | Time: 52 ms
+      → 🔄 MISS (Regenerated with new schema) | Plan: 1e9ae368 | Time: 28 ms
       🔍 Normalized: select * from orders where customer_id = ?
 
   🟢 PHASE 5: Execute again (cache hit after rebuild)
   ─────────────────────────────────────────────────
 
     Query: SELECT * FROM orders WHERE customer_id = 100
-      → ✅ HIT (New cached plan reused) | Plan: 774b68eb | Time: 1 ms
+      → ✅ HIT (New cached plan reused) | Plan: 1e9ae368 | Time: 1 ms
       🔍 Normalized: select * from orders where customer_id = ?
+
  ```
 ---
 ## Final Performance Comparison
