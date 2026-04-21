@@ -35,7 +35,332 @@ In real-world databases, executing queries repeatedly with different parameter v
 | `antlr-4.13.1-complete.jar` | ANTLR runtime for lexer/parser generation |
 | `SQLite.g4` | ANTLR grammar file for SQL parsing |
 
+### 1. Query Normalization Strategy
+
+**Goal:** Transform structurally identical queries with different literal values into the same canonical form.
+
+**Approach:**
+- Parse SQL using ANTLR to generate Abstract Syntax Tree (AST)
+- Traverse AST using **Visitor Pattern** to identify literal values
+- Replace all literals (numbers, strings, dates) with `?` placeholder
+- Preserve all structural elements (operators, table names, column names, JOIN types)
+- Convert to lowercase for case-insensitive matching
+
+**Why Visitor Pattern over Listener Pattern:**
+- Visitor pattern gives explicit control over traversal order
+- Easier to return transformed strings from child nodes
+- More intuitive for query transformation tasks
+
+**Example Transformation:**
+
+Original: SELECT * FROM users WHERE id = 101 AND status = 'ACTIVE'
+Normalized: select * from users where id = ? and status = ?
+
+
+
+---
+
+### 2. Cache Key Design
+
+**Goal:** Create unique, deterministic keys for cache lookup.
+
+**Approach:**
+- Use **normalized query string** as the cache key
+- No database version in key (handled separately in validation)
+- Keys are immutable strings for consistent hashing
+
+**Why not include schema version in key:**
+- Schema changes should invalidate, not create new cache entries
+- Including version would cause cache bloat on every schema change
+- Separate validation layer keeps cache size bounded
+
+**Key Characteristics:**
+| Property | Implementation |
+|----------|----------------|
+| Hash algorithm | String.hashCode() (Java built-in) |
+| Collision handling | ConcurrentHashMap handles internally |
+| Length | Varies with query complexity |
+| Example | `"select * from users where id = ?"` |
+
+---
+
+### 3. Storage Architecture
+
+**Goal:** Thread-safe, high-concurrency cache storage.
+
+**Approach:**
+- `ConcurrentHashMap<String, QueryPlan>` as primary storage
+- No external locking required (map handles internally)
+- O(1) average time complexity for get/put operations
+
+**Why ConcurrentHashMap over synchronized HashMap:**
+- Fine-grained locking (bucket-level vs whole map)
+- Better throughput under concurrent access
+- No need for external synchronization
+
+**Storage Structure:**
+
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ConcurrentHashMap │
+├─────────────────────────────────────────────────────────────────┤
+│ Key (String) │ Value (QueryPlan) │
+├─────────────────────────────────────────────────────────────────┤
+│ "select * from users where id=?"│ {id: "uuid-1", cost: 25.0, │
+│ │ tables: ["users"], version:1}│
+├─────────────────────────────────────────────────────────────────┤
+│ "select * from orders where id=?"│ {id: "uuid-2", cost: 45.0, │
+│ │ tables: ["orders"], version:2}│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+
+---
+
+### 4. Cache Invalidation Strategy (Key Innovation)
+
+**Problem:** Schema changes (ALTER TABLE) make cached execution plans stale and potentially incorrect.
+
+**Solution - Multi-Table Version Tracking:**
+
+**Approach:**
+1. Each table maintains an independent version counter
+2. Each QueryPlan stores the MAX version of all tables it accesses
+3. On schema change, increment version for affected table
+4. Validate plans by comparing stored version vs current MAX version
+
+**Version Tracking Example:**
+```java
+// Initial state
+schemaVersions: {"orders": 1, "users": 1, "products": 1}
+
+// Query: SELECT * FROM orders JOIN users ON orders.user_id = users.id
+// Plan stores: schemaVersion = max(1, 1) = 1
+
+// Schema change: ALTER TABLE orders ADD COLUMN discount
+schemaVersions: {"orders": 2, "users": 1, "products": 1}
+
+// Validation: currentMax = max(2, 1) = 2
+// Plan.schemaVersion (1) != currentMax (2) → INVALID → EVICT
+```
+
+Why MAX aggregation:
+
+    If ANY table in the query changed, the plan is invalid
+
+    Simple to implement and understand
+
+    No need to track complex cross-table dependencies
+
+Why per-table versions over single global version:
+
+    Global version would invalidate ALL plans on ANY schema change
+
+    Per-table versions only invalidate affected queries
+
+    Preserves cache hit ratio after schema changes
+
+Invalidation Flow:
+
+```
+ALTER TABLE orders ADD COLUMN discount
+         │
+         ▼
+schemaVersions.put("orders", 3)  // Increment from 2 to 3
+         │
+         ▼
+Iterate all cached plans
+         │
+         ▼
+┌────────────────────────────────────────────────────────────┐
+│ For each plan:                                             │
+│   if (plan.tablesAccessed.contains("orders")) {           │
+│       cache.remove(plan)  // Remove stale plan            │
+│   }                                                       │
+└────────────────────────────────────────────────────────────┘
+         │
+         ▼
+Future queries on "orders" → CACHE MISS → Generate new plan
+Future queries on "users" only → CACHE HIT (unaffected)
+```
+
+5. Cache Eviction Policy
+Goal: Prevent unbounded cache growth while keeping frequently used plans.
+
+Approach - Simplified LRU:
+
+Maximum cache size: 100 plans (configurable)
+
+When limit reached, remove first entry in iteration order
+
+No timestamp tracking overhead
+
+Why simplified LRU over traditional LRU:
+
+Traditional LRU requires tracking access timestamps or maintaining access order lists
+
+Simplified version has O(1) eviction cost
+
+Sufficient for bounded, moderate-sized cache
+
+Eviction Flow:
+
+```
+put() called when cache.size() >= maxSize
+         │
+         ▼
+┌────────────────────────────────────────────────────────────┐
+│ String oldestKey = cache.entrySet()                        │
+│                     .iterator()                            │
+│                     .next()                                │
+│                     .getKey();                             │
+│ cache.remove(oldestKey);                                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+Limitations acknowledged:
+
+    Not true LRU (iteration order is not guaranteed by ConcurrentHashMap)
+    Acceptable for demo/prototype; production would need priority queue
+
+6. Two-Phase Cache Validation
+Goal: Prevent stale plan accumulation and ensure correctness.
+
+Approach:
+
+Phase 1 - Existence Check: Does key exist in cache?
+
+Phase 2 - Validity Check: Is plan still valid (schema version matches)?
+
+Implementation:
+```
+QueryPlan plan = cache.get(normalizedQuery);
+
+if (plan != null && cache.isValid(normalizedQuery, plan)) {
+    // CACHE HIT - Safe to reuse
+    return plan;
+}
+
+// CACHE MISS or INVALID
+if (plan != null && !cache.isValid(normalizedQuery, plan)) {
+    cache.evict(normalizedQuery);  // Clean up stale entry immediately
+}
+
+// Generate new plan...
+```
+
+Why immediate eviction on invalid:
+    
+    Prevents accumulation of dead entries
+    
+    Keeps cache size accurate
+    
+    Avoids repeated validation failures for same query
+
+7. Cost Estimation Heuristics
+Goal: Provide realistic cost estimates without actual database statistics.
+
+Approach - Operation-Based Weighting:
+
+SQL Feature	Cost Addition	Rationale
+Base cost	10.0	Minimum query overhead
+WHERE clause	+5.0	Filter operation
+ORDER BY	+8.0	Sorting overhead
+GROUP BY	+15.0	Aggregation overhead
+JOIN	+25.0	Multiple table access
+Subquery	+30.0	Nested execution
+orders table	+20.0	Large table assumption
+products table	+15.0	Medium table assumption
+users table	+10.0	Small table assumption
+
+Example Calculation:
+```
+SELECT * FROM orders o JOIN users u ON o.user_id = u.id WHERE o.total > 1000
+```
+
+Cost = 10 (base) + 25 (JOIN) + 5 (WHERE) + 20 (orders table) + 10 (users table) = 70.0
+
+8. Table Extraction Method
+Goal: Identify which tables a query accesses for invalidation.
+
+Approach - Pattern Matching over AST Traversal:
+
+Why pattern matching:
+    
+    Faster than full AST traversal
+    
+    Sufficient for test query set
+    
+    No parser overhead for extraction
+
+Implementation:
+
+```
+private void extractTables(String query, QueryPlan plan) {
+    String lowerQuery = query.toLowerCase();
+    if (lowerQuery.contains("orders")) plan.addTableAccessed("orders");
+    if (lowerQuery.contains("products")) plan.addTableAccessed("products");
+    if (lowerQuery.contains("users")) plan.addTableAccessed("users");
+    if (lowerQuery.contains("customers")) plan.addTableAccessed("customers");
+}
+```
+
+9. Plan Generation Simulation
+Goal: Simulate realistic plan generation costs without actual database.
+
+Approach - Randomized Delay:
+
+```
+Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 20));
+// PLAN_GEN_BASE_TIME = 45 ms
+// Random adds 0-20 ms → Total 45-65 ms
+```
+
+Why this range:
+
+    45ms represents minimum parsing + optimization time
+    
+    Random variance simulates query complexity differences
+    
+    Matches real database behavior (PostgreSQL: 30-80ms for complex queries)
+
+10. Metrics Collection
+Goal: Track cache effectiveness for performance analysis.
+
+Metrics Tracked:
+
+Metric	How Calculated	Purpose
+Hit Ratio	hits / (hits + misses)	Cache effectiveness
+Avg Time/Query	totalTime / totalQueries	Performance measurement
+Access Count	Incremented per hit	Popularity tracking
+Cache Size	map.size()	Growth monitoring
+
+Why these metrics:
+
+    Hit ratio directly correlates with performance improvement
+    
+    Average time shows real speedup
+    
+    Access count identifies hot plans for potential pinning
+
+📊 Design Decision Summary
+Design Aspect	Chosen Approach	Alternative Avoided	Rationale
+Normalization	Visitor Pattern	Listener Pattern	Explicit traversal control
+Cache Key	Normalized string only	With version suffix	Prevents cache bloat
+Invalidation	Per-table MAX version	Global version	Preserves unaffected plans
+Eviction	Simplified LRU	Timestamp LRU	No timestamp overhead
+Validation	Two-phase with cleanup	Single-phase	Prevents stale accumulation
+Cost Estimation	Heuristic weighting	DB statistics	Self-contained
+Table Extraction	Pattern matching	AST traversal	Faster for test workload
+Storage	ConcurrentHashMap	synchronized HashMap	Better concurrency
+
+
+
+
+
 ## 💡 Design Strategy
+
 
 ### 1. Identifying Similar Queries (Query Normalization)
 
