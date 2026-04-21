@@ -188,21 +188,17 @@ Future queries on "users" only → CACHE HIT (unaffected)
 ### 5. Cache Eviction Policy
 Goal: Prevent unbounded cache growth while keeping frequently used plans.
 
-Approach - Simplified LRU:
+Approach - True LRU with Timestamp Tracking:
 
 Maximum cache size: 100 plans (configurable)
+Each cache entry stores last access timestamp
+On eviction, find entry with oldest timestamp
+O(n) eviction cost (acceptable for bounded cache)
 
-When limit reached, remove first entry in iteration order
-
-No timestamp tracking overhead
-
-Why simplified LRU over traditional LRU:
-
-Traditional LRU requires tracking access timestamps or maintaining access order lists
-
-Simplified version has O(1) eviction cost
-
-Sufficient for bounded, moderate-sized cache
+Why True LRU over Simplified LRU:
+    True LRU accurately tracks most recently used plans
+    Timestamp approach is simple and predictable
+    O(n) is acceptable for cache size of 100
 
 Eviction Flow:
 
@@ -211,18 +207,16 @@ put() called when cache.size() >= maxSize
          │
          ▼
 ┌────────────────────────────────────────────────────────────┐
-│ String oldestKey = cache.entrySet()                        │
-│                     .iterator()                            │
-│                     .next()                                │
-│                     .getKey();                             │
-│ cache.remove(oldestKey);                                   │
+│ Find key with minimum timestamp in accessTimestamps map    │
+│                         │                                   │
+│                         ▼                                   │
+│ oldestKey = key with smallest timestamp value              │
+│                         │                                   │
+│                         ▼                                   │
+│ cache.remove(oldestKey);                                    │
+│ accessTimestamps.remove(oldestKey);                         │
 └────────────────────────────────────────────────────────────┘
 ```
-
-Limitations acknowledged:
-
-    Not true LRU (iteration order is not guaranteed by ConcurrentHashMap)
-    Acceptable for demo/prototype; production would need priority queue
 
 ### 6. Two-Phase Cache Validation
 Goal: Prevent stale plan accumulation and ensure correctness.
@@ -589,16 +583,28 @@ public class QueryPlanCache {
     
     public QueryPlanCache(int maxSize) {
         this.cache = new ConcurrentHashMap<>();
-        this.accessTimestamps = new ConcurrentHashMap<>();  // ← IMPORTANT
+        this.accessTimestamps = new ConcurrentHashMap<>();
         this.schemaVersions = new ConcurrentHashMap<>();
         this.maxSize = maxSize;
+    }
+    
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        if (!enabled) {
+            System.out.println("  ⚙️ Cache DISABLED");
+        } else {
+            System.out.println("  ⚙️ Cache ENABLED");
+        }
+    }
+    
+    public int getSize() {
+        return cache.size();
     }
     
     public QueryPlan get(String key) {
         if (!enabled) return null;
         QueryPlan plan = cache.get(key);
         if (plan != null) {
-            // Update timestamp on every access for true LRU
             accessTimestamps.put(key, System.currentTimeMillis());
         }
         return plan;
@@ -607,17 +613,15 @@ public class QueryPlanCache {
     public void put(String key, QueryPlan plan) {
         if (!enabled) return;
         
-        // LRU eviction if cache is full
         if (cache.size() >= maxSize) {
             evictLRU();
         }
         
-        // Tag plan with current schema version
         int currentVersion = getCurrentSchemaVersion(plan.getTablesAccessed());
         plan.setSchemaVersion(currentVersion);
         
         cache.put(key, plan);
-        accessTimestamps.put(key, System.currentTimeMillis());  // Record insertion time
+        accessTimestamps.put(key, System.currentTimeMillis());
     }
     
     // TRUE LRU implementation - finds oldest by timestamp
@@ -637,6 +641,44 @@ public class QueryPlanCache {
         if (oldestKey != null) {
             cache.remove(oldestKey);
             accessTimestamps.remove(oldestKey);
+            System.out.println("  🗑️ LRU evicted (last access: " + 
+                              (System.currentTimeMillis() - oldestTime) + "ms ago): " + 
+                              oldestKey.substring(0, Math.min(30, oldestKey.length())) + "...");
+        }
+    }
+    
+    public void invalidateForTable(String tableName) {
+        if (!enabled) return;
+        
+        int newVersion = schemaVersions.getOrDefault(tableName, 0) + 1;
+        schemaVersions.put(tableName, newVersion);
+        
+        int removedCount = 0;
+        Iterator<Map.Entry<String, QueryPlan>> iterator = cache.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, QueryPlan> entry = iterator.next();
+            if (entry.getValue().getTablesAccessed().contains(tableName)) {
+                iterator.remove();
+                accessTimestamps.remove(entry.getKey());
+                removedCount++;
+            }
+        }
+        
+        System.out.printf("  🗑️ Invalidated %d cache entries for table: %s%n", 
+                         removedCount, tableName);
+    }
+    
+    public void clear() {
+        cache.clear();
+        accessTimestamps.clear();
+        System.out.println("  🗑️ Cache cleared completely");
+    }
+    
+    public void evict(String key) {
+        if (cache.remove(key) != null) {
+            accessTimestamps.remove(key);
+            System.out.println("    🗑️ Evicted invalid cache entry: " + 
+                              key.substring(0, Math.min(30, key.length())) + "...");
         }
     }
 }
