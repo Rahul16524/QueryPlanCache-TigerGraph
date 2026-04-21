@@ -35,6 +35,7 @@ In real-world databases, executing queries repeatedly with different parameter v
 | `antlr-4.13.1-complete.jar` | ANTLR runtime for lexer/parser generation |
 | `SQLite.g4` | ANTLR grammar file for SQL parsing |
 
+---
 ### 1. Query Normalization Strategy
 
 **Goal:** Transform structurally identical queries with different literal values into the same canonical form.
@@ -184,7 +185,7 @@ Iterate all cached plans
 Future queries on "orders" → CACHE MISS → Generate new plan
 Future queries on "users" only → CACHE HIT (unaffected)
 ```
-
+---
 ### 5. Cache Eviction Policy
 Goal: Prevent unbounded cache growth while keeping frequently used plans.
 
@@ -217,7 +218,7 @@ put() called when cache.size() >= maxSize
 │ accessTimestamps.remove(oldestKey);                         │
 └────────────────────────────────────────────────────────────┘
 ```
-
+---
 ### 6. Two-Phase Cache Validation
 Goal: Prevent stale plan accumulation and ensure correctness.
 
@@ -274,7 +275,7 @@ SELECT * FROM orders o JOIN users u ON o.user_id = u.id WHERE o.total > 1000
 ```
 
 Cost = 10 (base) + 25 (JOIN) + 5 (WHERE) + 20 (orders table) + 10 (users table) = 70.0
-
+---
 ### 8. Table Extraction Method
 Goal: Identify which tables a query accesses for invalidation.
 
@@ -299,7 +300,7 @@ private void extractTables(String query, QueryPlan plan) {
     if (lowerQuery.contains("customers")) plan.addTableAccessed("customers");
 }
 ```
-
+---
 ### 9. Plan Generation Simulation
 Goal: Simulate realistic plan generation costs without actual database.
 
@@ -320,7 +321,7 @@ Why this range:
     Random variance simulates query complexity differences
     
     Matches real database behavior (PostgreSQL: 30-80ms for complex queries)
-
+---
 ### 10. Metrics Collection
 Goal: Track cache effectiveness for performance analysis.
 
@@ -351,6 +352,7 @@ Cost Estimation	Heuristic weighting	DB statistics	Self-contained
 Table Extraction	Pattern matching	AST traversal	Faster for test workload
 Storage	ConcurrentHashMap	synchronized HashMap	Better concurrency
 
+---
 ## 🔄 Execution Flow
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -515,7 +517,7 @@ SQL Query: SELECT * FROM users WHERE id = 101
 │  [File: ResultSetFormatter.java, Line: 45] - Format results for display                         │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-
+---
 ```
 
 ## 📊 ANTLR Parse Tree Example
@@ -823,7 +825,7 @@ Output :
       → ✅ HIT (New cached plan reused) | Plan: 774b68eb | Time: 1 ms
       🔍 Normalized: select * from orders where customer_id = ?
  ```
-
+---
 ## Final Performance Comparison
 ```
 📈 CACHE PERFORMANCE (Fair Comparison):
