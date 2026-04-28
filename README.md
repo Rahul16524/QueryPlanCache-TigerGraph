@@ -49,6 +49,10 @@ Before starting, ensure you have:
 
 
 ---
+## 🖥️ Platform Support
+
+### Windows Users
+The commands below are designed for **Windows**. Follow the instructions as written.
 
 ## 🚀 How to Run
 
