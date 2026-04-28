@@ -104,30 +104,31 @@ Installation path: C:\Program Files\Git (default)
 
 PATH environment: Select "Git from the command line and also from 3rd-party software"
 
-Line endings: Select "Checkout Windows-style, commit Unix-style line endings"
-
-Terminal emulator: Select "Use MinTTY"
-
 Complete the installation
 
 Verify Installation:
 
 cmd
+```
 git --version
+```
 Expected Output:
-
-text
+```
 git version 2.xx.x.windows.x
+```
 
-
-3. Install/Verify curl
+### 3. Install/Verify curl
 Check if already installed (Windows 10/11 have it pre-installed):
 
-cmd
+```
 curl --version
+```
 If not installed:
 
-Download from curl.se/windows
+Download from 
+```
+curl.se/windows
+```
 
 Extract ZIP to C:\Program Files\curl\
 
@@ -135,12 +136,13 @@ Add C:\Program Files\curl\bin to System PATH
 
 Verify Installation:
 
-cmd
+```
 curl --version
+```
 4. Final Verification
 Run these commands to ensure everything is ready:
 
-cmd
+```
 echo === Java ===
 java -version
 javac -version
@@ -151,6 +153,7 @@ git --version
 
 echo === curl ===
 curl --version
+```
 
 ### Required Files
 
