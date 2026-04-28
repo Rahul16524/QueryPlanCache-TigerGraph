@@ -1,3 +1,16 @@
+/**
+ * QueryService
+ * ------------------------------------------------------
+ * This is the MAIN class that handles query execution.
+ * 
+ * Responsibilities:
+ * 1. Normalize query (so similar queries match)
+ * 2. Check cache (HIT / MISS)
+ * 3. Validate schema version
+ * 4. Generate new plan if needed
+ * 5. Store plan in cache
+ * 6. Track performance metrics
+ */
 package com.querycache.service;
 
 import com.querycache.cache.QueryPlanCache;
@@ -31,6 +44,13 @@ public class QueryService {
     public CacheMetrics getMetrics() { return metrics; }
     
     public QueryPlan execute(String query) {
+    	
+    		// FIRST: Validate the query syntax
+        if (!parserService.validateQuery(query)) {
+            throw new IllegalArgumentException("Invalid SQL syntax: " + query);
+        }
+        
+        
         long startTime = System.currentTimeMillis();
         
         String normalizedQuery = parserService.normalizeQuery(query);
@@ -77,6 +97,7 @@ public class QueryService {
     private double calculateEstimatedCost(String query) {
         double cost = 10.0;
         String lowerQuery = query.toLowerCase();
+        
         if (lowerQuery.contains("where")) cost += 5.0;
         if (lowerQuery.contains("join")) cost += 25.0;
         if (lowerQuery.contains("order by")) cost += 8.0;
@@ -86,6 +107,7 @@ public class QueryService {
         if (lowerQuery.contains("orders")) cost += 20.0;
         if (lowerQuery.contains("products")) cost += 15.0;
         if (lowerQuery.contains("users")) cost += 10.0;
+        
         return Math.round(cost * 100.0) / 100.0;
     }
     

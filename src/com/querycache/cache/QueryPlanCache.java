@@ -8,225 +8,278 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.querycache.model.QueryPlan;
 
 /**
- * QueryPlanCache - Stores and manages cached query execution plans
- * 
- * Features:
- * - Thread-safe cache using ConcurrentHashMap
- * - Schema version tracking for cache invalidation
- * - LRU eviction when cache exceeds max size
- * - Selective invalidation by table name
+ * QueryPlanCache
+ * -------------------------------------------------------
+ * This class stores and manages query execution plans.
+ *
+ * Think of it like:
+ * 👉 "Memory box for query plans"
+ *
+ * Responsibilities:
+ * 1. Store query plans
+ * 2. Return plans if already available (CACHE HIT)
+ * 3. Remove old plans when cache is full (LRU)
+ * 4. Remove plans when schema changes
  */
 public class QueryPlanCache {
     
-    // ========== FIELDS ==========
+    // ===================== DATA STRUCTURES =====================
+
+    // Main cache → stores (Normalized Query → QueryPlan)
+    private final Map<String, QueryPlan> cache;
     
-    private final Map<String, QueryPlan> cache;        // Main cache storage (Key → QueryPlan)
-    private final Map<String, Integer> schemaVersions; // Tracks schema version per table
-    private final int maxSize;                          // Maximum number of plans in cache
-    private boolean enabled = true;                     // Cache ON/OFF switch
+    // Tracks last access time → used for LRU eviction
+    private final Map<String, Long> accessTimestamps;
     
-    // ========== CONSTRUCTORS ==========
+    // Tracks schema version for each table
+    // Example: users → 2, orders → 1
+    private final Map<String, Integer> schemaVersions;
     
+    // Maximum number of entries allowed in cache
+    private final int maxSize;
+    
+    // Cache ON/OFF switch
+    private boolean enabled = true;
+    
+    
+    // ===================== CONSTRUCTORS =====================
+
     /**
-     * Create cache with default max size (100 plans)
+     * Default constructor → max size = 100
      */
     public QueryPlanCache() {
-        this(100); // Default max size 100
+        this(100);
     }
     
     /**
-     * Create cache with custom max size
-     * @param maxSize Maximum number of plans to store
+     * Custom size constructor
      */
     public QueryPlanCache(int maxSize) {
-        this.cache = new ConcurrentHashMap<>();        // Thread-safe map
-        this.schemaVersions = new ConcurrentHashMap<>(); // Version tracking
+        this.cache = new ConcurrentHashMap<>();
+        this.accessTimestamps = new ConcurrentHashMap<>();
+        this.schemaVersions = new ConcurrentHashMap<>();
         this.maxSize = maxSize;
     }
     
-    // ========== CACHE CONTROL ==========
     
+    // ===================== CACHE CONTROL =====================
+
     /**
-     * Enable or disable the cache
-     * When disabled, get() always returns null (forces plan generation)
+     * Enable or Disable cache
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) {
-            System.out.println("  ⚙️ Cache DISABLED");
+        
+        if (enabled) {
+            System.out.println("⚙️ Cache ENABLED");
         } else {
-            System.out.println("  ⚙️ Cache ENABLED");
+            System.out.println("⚙️ Cache DISABLED");
         }
     }
-    
+
     public boolean isEnabled() {
         return enabled;
     }
     
+    
+    // ===================== GET (READ FROM CACHE) =====================
+
     /**
-     * Retrieve a plan from cache by its normalized query key
-     * @param key Normalized query string (e.g., "SELECT * FROM orders WHERE id = ?")
-     * @return QueryPlan if found and cache enabled, otherwise null
+     * Get query plan from cache
+     *
+     * Steps:
+     * 1. If cache disabled → return null
+     * 2. Check if plan exists
+     * 3. If exists → update timestamp (important for LRU)
      */
     public QueryPlan get(String key) {
-        if (!enabled) return null;  // Cache disabled → always miss
-        return cache.get(key);
+        
+        // If cache OFF → always behave like MISS
+        if (!enabled) return null;
+        
+        QueryPlan plan = cache.get(key);
+        
+        if (plan != null) {
+            // Update last access time (VERY IMPORTANT for LRU)
+            accessTimestamps.put(key, System.currentTimeMillis());
+        }
+        
+        return plan;
     }
     
+    
+    // ===================== PUT (STORE IN CACHE) =====================
+
     /**
-     * Store a plan in cache
-     * - Checks size limit before storing
-     - Tags the plan with current schema version
-     * 
-     * @param key Normalized query string
-     * @param plan QueryPlan to store
+     * Store a new query plan
+     *
+     * Steps:
+     * 1. If cache full → remove least used plan (LRU)
+     * 2. Get current schema version
+     * 3. Attach version to plan
+     * 4. Store in cache
      */
     public void put(String key, QueryPlan plan) {
-        if (!enabled) return;  // Cache disabled → don't store
         
-        // Check size limit - if full, remove oldest entry (LRU)
+        if (!enabled) return;
+        
+        // Step 1: If full → remove least recently used plan
         if (cache.size() >= maxSize) {
             evictLRU();
         }
         
-        // IMPORTANT: Tag plan with current schema version before storing
-        // This allows future validation when schema changes
-        int currentSchemaVersion = getCurrentSchemaVersion(plan.getTablesAccessed());
-        plan.setSchemaVersion(currentSchemaVersion);
+        // Step 2: Get current schema version
+        int version = getCurrentSchemaVersion(plan.getTablesAccessed());
         
-        // Store in cache
+        // Step 3: Attach version to plan
+        plan.setSchemaVersion(version);
+        
+        // Step 4: Store in cache
         cache.put(key, plan);
+        
+        // Save timestamp (for LRU)
+        accessTimestamps.put(key, System.currentTimeMillis());
     }
     
-    // ========== CACHE INVALIDATION ==========
     
+    // ===================== SCHEMA INVALIDATION =====================
+
     /**
-     * Invalidate (remove) all cached plans that access a specific table
-     * Called when a table's schema changes (ALTER TABLE)
-     * 
-     * How it works:
-     * 1. Increment schema version counter for this table
-     * 2. Iterate through all cached plans
-     * 3. Remove plans that reference this table
-     * 
-     * @param tableName Name of table that changed (e.g., "orders", "users")
+     * Called when table schema changes (ALTER TABLE)
+     *
+     * Steps:
+     * 1. Increase schema version
+     * 2. Remove all plans using that table
      */
     public void invalidateForTable(String tableName) {
+        
         if (!enabled) return;
         
-        // STEP 1: Increment schema version for this table
-        // Example: orders version 1 → 2 (schema changed!)
+        // Step 1: Increase schema version
         int newVersion = schemaVersions.getOrDefault(tableName, 0) + 1;
         schemaVersions.put(tableName, newVersion);
         
-        // STEP 2: Remove all cache entries that use this table
         int removedCount = 0;
+        
+        // Step 2: Remove affected plans
         Iterator<Map.Entry<String, QueryPlan>> iterator = cache.entrySet().iterator();
+        
         while (iterator.hasNext()) {
             Map.Entry<String, QueryPlan> entry = iterator.next();
-            // Check if this plan accesses the changed table
+            
+            // If query uses this table → remove it
             if (entry.getValue().getTablesAccessed().contains(tableName)) {
-                iterator.remove();  // Remove invalid plan
+                iterator.remove();
+                accessTimestamps.remove(entry.getKey());
                 removedCount++;
             }
         }
         
-        // Report how many entries were removed
-        System.out.printf("  🗑️ Invalidated %d cache entries for table: %s%n", 
-                         removedCount, tableName);
+        System.out.println("🗑️ Invalidated " + removedCount + " plans for table: " + tableName);
     }
-    
+
     /**
-     * Public wrapper for invalidateForTable
-     * Called by QueryService when schema change is detected
+     * Wrapper method (called from service layer)
      */
     public void notifySchemaChange(String tableName) {
         invalidateForTable(tableName);
     }
     
+    
+    // ===================== CLEAR / REMOVE =====================
+
     /**
-     * Clear ALL entries from cache (complete reset)
+     * Clear entire cache
      */
     public void clear() {
         cache.clear();
-        System.out.println("  🗑️ Cache cleared completely");
+        accessTimestamps.clear();
+        System.out.println("🗑️ Cache cleared completely");
     }
-    
+
     /**
-     * Remove a single entry from cache by its key
-     * Used when a specific plan is found to be invalid
+     * Remove a specific query plan
      */
     public void evict(String key) {
         if (cache.remove(key) != null) {
-            System.out.println("    🗑️ Evicted invalid cache entry: " + 
-                              key.substring(0, Math.min(30, key.length())) + "...");
+            accessTimestamps.remove(key);
+            System.out.println("🗑️ Removed invalid plan: " + key);
         }
     }
     
-    // ========== EVICTION POLICY ==========
     
+    // ===================== LRU EVICTION =====================
+
     /**
-     * Evict the Least Recently Used entry (simplified LRU)
-     * 
-     * Note: This is a simplified implementation.
-     * Real LRU would track access timestamps.
-     * Here we just remove the first entry (oldest in iteration order).
+     * Remove Least Recently Used query
+     *
+     * Logic:
+     * Find query with oldest timestamp
      */
     private void evictLRU() {
-        if (!cache.isEmpty()) {
-            String oldestKey = cache.entrySet().iterator().next().getKey();
+        
+        if (cache.isEmpty()) return;		// if cache empty, nothing to remove from cache
+        
+        
+        String oldestKey = null;
+        long oldestTime = Long.MAX_VALUE;
+        
+        // Find least recently used query
+        for (Map.Entry<String, Long> entry : accessTimestamps.entrySet()) {
+            if (entry.getValue() < oldestTime) {
+                oldestTime = entry.getValue();
+                oldestKey = entry.getKey();
+            }
+        }
+        
+        // Remove it
+        if (oldestKey != null) {
             cache.remove(oldestKey);
+            accessTimestamps.remove(oldestKey);
+            
+            System.out.println("🗑️ LRU removed: " + oldestKey);
         }
     }
     
-    // ========== SCHEMA VERSION MANAGEMENT ==========
     
+    // ===================== SCHEMA VERSION LOGIC =====================
+
     /**
-     * Get the current schema version for a list of tables
-     * Returns the MAX version among all tables
-     * 
-     * Example:
-     *   tables = ["orders", "products"]
-     *   schemaVersions = {"orders": 2, "products": 1}
-     *   Returns: 2 (the highest version)
-     * 
-     * Why max? If ANY table changed, the plan is invalid!
+     * Get current schema version
+     *
+     * Important rule:
+     * 👉 If ANY table changed → plan becomes invalid
      */
     private int getCurrentSchemaVersion(List<String> tables) {
+        
         int maxVersion = 0;
+        
         for (String table : tables) {
             int version = schemaVersions.getOrDefault(table, 0);
             maxVersion = Math.max(maxVersion, version);
         }
+        
         return maxVersion;
     }
-    
+
     /**
-     * Check if a cached plan is still valid
-     * 
-     * A plan is valid if:
-     * - Cache is enabled
-     * - Plan's schema version == Current schema version
-     * 
-     * @param key Cache key (for debugging)
-     * @param plan Plan to validate
-     * @return true if plan can be safely reused
+     * Check if plan is still valid
+     *
+     * Valid only if:
+     * plan version == current schema version
      */
     public boolean isValid(String key, QueryPlan plan) {
+        
         if (!enabled) return false;
         
-        // Get current schema version (may have changed since plan was stored)
-        int currentSchemaVersion = getCurrentSchemaVersion(plan.getTablesAccessed());
+        int currentVersion = getCurrentSchemaVersion(plan.getTablesAccessed());
         
-        // Compare: Is plan's version up-to-date?
-        return plan.getSchemaVersion() == currentSchemaVersion;
+        return plan.getSchemaVersion() == currentVersion;
     }
     
-    // ========== UTILITY METHODS ==========
     
-    /**
-     * Get number of plans currently in cache
-     */
+    // ===================== UTILITY =====================
+
     public int getSize() {
         return cache.size();
     }

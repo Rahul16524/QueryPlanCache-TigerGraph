@@ -19,7 +19,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class SQLiteParserService {
     
     // Set to true to see lexer/parser output (for educational purposes)
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private static int queryCount = 0;
     
     /**

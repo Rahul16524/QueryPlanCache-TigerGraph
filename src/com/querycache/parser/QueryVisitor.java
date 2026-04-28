@@ -244,7 +244,7 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         // Handle bind parameters
         if (ctx.BIND_PARAMETER() != null) {
             return "?";
-        }
+        }		
         
         // Handle column names
         if (ctx.column_name() != null) {
