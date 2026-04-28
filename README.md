@@ -364,16 +364,19 @@ Normalized: select * from users where id = ? and status = ?
 
 **Version Tracking Example:**
 ```java
-// Initial state
-schemaVersions: {"orders": 1, "users": 1, "products": 1}
+// Initial state (empty - versions created on first schema change)
+schemaVersions: {}  // Empty map, versions start at 0
+
+// First schema change: CREATE TABLE orders
+schemaVersions: {"orders": 1}
 
 // Query: SELECT * FROM orders JOIN users ON orders.user_id = users.id
-// Plan stores: schemaVersion = max(1, 1) = 1
+// Plan stores: schemaVersion = max(1, 0) = 1
 
 // Schema change: ALTER TABLE orders ADD COLUMN discount
-schemaVersions: {"orders": 2, "users": 1, "products": 1}
+schemaVersions: {"orders": 2, "users": 0, "products": 0}
 
-// Validation: currentMax = max(2, 1) = 2
+// Validation: currentMax = max(2, 0) = 2
 // Plan.schemaVersion (1) != currentMax (2) → INVALID → EVICT
 ```
 
@@ -622,8 +625,8 @@ SQL Query: SELECT * FROM users WHERE id = 101
 │  │  • Value: CachedPlanEntry { executionPlan, cost, timestamp, schemaVersion, hits }      │    │
 │  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                                  │
-│  cache.lock.readLock()  ───►  cacheMap.get(normalizedSql)  ───►  cache.lock.readUnlock()       │
-│                                                                                                  │
+│  // No explicit locks - ConcurrentHashMap provides thread-safe operations                       │
+│   cacheMap.get(normalizedSql)  // Thread-safe internally                                                                                               │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 │
 │                              ┌───────────────────────────────────────┐
