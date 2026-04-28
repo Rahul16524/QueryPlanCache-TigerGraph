@@ -28,8 +28,127 @@ In real-world databases, executing queries repeatedly with different parameter v
 | Git | Any version | Latest |
 | Memory | 512 MB | 1 GB |
 | Disk Space | 50 MB | 100 MB |
-| OS | Windows/Linux/Mac | Any with Java support |
+| OS | Windows 11 | Any with Java support |
 | Internet Connection | Required | Required for cloning repo and downloading JAR |
+
+## 🔧 Environment Setup
+### 1. Install Java JDK 21 (Oracle)
+Download: Oracle JDK 21 MSI Installer
+
+#### Direct Download Link:
+
+Scroll down to Java SE Development Kit 21.0.10 (latest update)
+
+Find Windows x64 msi Installer (164.44 MB)
+
+Accept the Oracle No-Fee Terms and Conditions
+
+Click to download
+
+#### Installation Steps:
+
+Run the downloaded .msi file
+
+Click Next on the welcome screen
+
+Click Next to accept the default installation path (C:\Program Files\Java\jdk-21.0.10)
+
+Click Install to begin installation
+
+Click Finish when complete
+
+### Set JAVA_HOME Environment Variable:
+
+**Set JAVA_HOME Environment Variable:**
+
+| Step | Action |
+|------|--------|
+| 1 | Press `Win + S`, type "Environment Variables", select "Edit the system environment variables" |
+| 2 | Click "Environment Variables..." |
+| 3 | Under System variables, click "New..." |
+| 4 | Set `Variable name` = `JAVA_HOME` |
+| 5 | Set `Variable value` = `C:\Program Files\Java\jdk-21.0.10` |
+| 6 | Click "OK" |
+| 7 | Under System variables, find and select `Path`, click "Edit..." |
+| 8 | Click "New" and add `%JAVA_HOME%\bin` |
+| 9 | Click "OK" on all windows |
+
+### Verify Installation (Open new Command Prompt):
+
+```
+java -version
+javac -version
+echo %JAVA_HOME%
+```
+### Expected Output:
+
+```
+java version "21.0.10" 2025-01-21 LTS
+Java(TM) SE Runtime Environment (build 21.0.10+xx-LTS-xxx)
+javac 21.0.10
+C:\Program Files\Java\jdk-21.0.10
+```
+
+### 2. Install Git
+Download: Git for Windows (64-bit version)
+
+Installation Steps:
+
+Run the installer
+
+Important settings to select:
+
+Installation path: C:\Program Files\Git (default)
+
+PATH environment: Select "Git from the command line and also from 3rd-party software"
+
+Line endings: Select "Checkout Windows-style, commit Unix-style line endings"
+
+Terminal emulator: Select "Use MinTTY"
+
+Complete the installation
+
+Verify Installation:
+
+cmd
+git --version
+Expected Output:
+
+text
+git version 2.xx.x.windows.x
+
+
+3. Install/Verify curl
+Check if already installed (Windows 10/11 have it pre-installed):
+
+cmd
+curl --version
+If not installed:
+
+Download from curl.se/windows
+
+Extract ZIP to C:\Program Files\curl\
+
+Add C:\Program Files\curl\bin to System PATH
+
+Verify Installation:
+
+cmd
+curl --version
+4. Final Verification
+Run these commands to ensure everything is ready:
+
+cmd
+echo === Java ===
+java -version
+javac -version
+echo %JAVA_HOME%
+
+echo === Git ===
+git --version
+
+echo === curl ===
+curl --version
 
 ### Required Files
 
@@ -45,6 +164,7 @@ Before starting, ensure you have:
 |--------------|---------------------|
 | Git installed | `git --version` |
 | Java JDK installed | `java -version` |
+| curl installed | `curl -version` |
 | Internet connection | Required for cloning and downloading JAR |
 
 
