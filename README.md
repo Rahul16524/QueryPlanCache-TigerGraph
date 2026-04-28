@@ -179,7 +179,7 @@ Before starting, ensure you have:
 ### Windows Users
 The commands below are designed for **Windows**. Follow the instructions as written.
 
-## 🚀 How to Run
+## 🚀 How to Run  (if environment is setup)
 
 ### 1. Open Command Prompt
 Press Win + R,
