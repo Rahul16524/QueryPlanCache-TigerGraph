@@ -62,47 +62,42 @@ type cmd, and
 press Enter
 
 
-### 3. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
+### 2. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
 ```
 chcp 65001
 ```
 Note: This step prevents box-drawing characters (│, ─, └, etc.) from appearing as ? in the output.
 
-### 3. Navigate to Desktop (or your preferred location)
-```
-cd /d %USERPROFILE%\OneDrive\Desktop 2>nul || cd /d %USERPROFILE%\Desktop
-```
-
-### 4. Create Project Folder
+### 3. Create Project Folder(in current directory)
 ```
 mkdir QueryPlanProject 2>nul
 ```
-### 5. Move inside QueryPlanProject folder
+### 4. Move inside QueryPlanProject folder
 ```
 cd QueryPlanProject
 ```
 
-### 6. Clone the Repository
+### 5. Clone the Repository
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
 ```
 
-### 7. Enter the Project Directory
+### 6. Enter the Project Directory
 ``` 
 cd QueryPlanCache-TigerGraph
 ```
 
-### 8. Download ANTLR JAR File
+### 7. Download ANTLR JAR File
 ``` 
 curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
 ```
 
-### 9. Compile the Project
+### 8. Compile the Project
 ``` 
 javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java
 ```
 
-### 10. Run the Test Suite
+### 9. Run the Test Suite
 ```
 java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
