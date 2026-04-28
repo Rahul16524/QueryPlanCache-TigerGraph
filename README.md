@@ -496,6 +496,7 @@ ORDER BY	+8.0	Sorting overhead
 GROUP BY	+15.0	Aggregation overhead
 JOIN	+25.0	Multiple table access
 Subquery	+30.0	Nested execution
+DISTINCT    +12.0    for distinct
 orders table	+20.0	Large table assumption
 products table	+15.0	Medium table assumption
 users table	+10.0	Small table assumption
@@ -538,11 +539,11 @@ Goal: Simulate realistic plan generation costs without actual database.
 Approach - Randomized Delay:
 
 ```
-private static final int PLAN_GEN_BASE_TIME = 10;  // 10ms base 
+private static final int PLAN_GEN_BASE_TIME = 45;  // 45ms base 
 
 // Simulate plan generation (10-45ms range)
 Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 35));
-// Range: 10ms to 45ms
+// Range: 45ms to 65ms
 ```
 
 Why this range:
