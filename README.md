@@ -34,11 +34,12 @@ In real-world databases, executing queries repeatedly with different parameter v
 ## 🔧 Environment Setup
 ### 1. Install Java JDK 17 (Oracle)
 Download: Oracle JDK 17 MSI Installer
+#### Direct Download Link:
 ```
 https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 ```
 
-#### Direct Download Link:
+
 
 Scroll down to Java SE Development Kit 17.0.12 (latest update)
 
