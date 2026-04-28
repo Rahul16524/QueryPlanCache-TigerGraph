@@ -60,32 +60,32 @@ cd /d %USERPROFILE%\Desktop
 ```
 mkdir QueryPlanProject
 ```
-move inside QueryPlanPorject folder
+5. Move inside QueryPlanProject folder
 ```
 cd QueryPlanProject
 ```
 
-5. Clone the Repository
+6. Clone the Repository
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
 ```
 
-6. Enter the Project Directory
+7. Enter the Project Directory
 ``` 
 cd QueryPlanCache-TigerGraph
 ```
 
-7. Download ANTLR JAR File
+8. Download ANTLR JAR File
 ``` 
 curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
 ```
 
-8. Compile the Project
+9. Compile the Project
 ``` 
 javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java
 ```
 
-9. Run the Test Suite
+10. Run the Test Suite
 ```
 java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
