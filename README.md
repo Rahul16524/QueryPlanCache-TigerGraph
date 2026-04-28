@@ -1133,7 +1133,7 @@ This project incorporated modest AI assistance, focused mainly on structural rec
 ### Code Generation & Architecture
 
 - Used AI to gain familiarity with ANTLR parse tree traversal concepts and to explore potential implementation strategies
-- Looked at code templates and structural suggestions to help shape mock plan outlines, complexity calculations, and test arrangements — but the core logic and ultimate implementation were independently created from scratch.
+- Looked at code templates and structural suggestions to help shape test arrangements — but the core logic and ultimate implementation were independently created from scratch..
 - Received minor syntax corrections and readability improvements
 - Independently implemented **cache eviction policies (LRU/LFU)** and **query normalization logic**
 - Self-designed performance comparison logic including hit/miss ratio and speedup factor calculations
