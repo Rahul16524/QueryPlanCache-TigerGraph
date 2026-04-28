@@ -181,9 +181,13 @@ The commands below are designed for **Windows**. Follow the instructions as writ
 
 ## 🚀 How to Run  (if environment is setup)
 
-### Step 0: Confirm Environment & Dependencies
-*(If any are missing, configure them using the setup steps above)*
+### Step 1: Open Command Prompt & Verify Environment
+#### 1.1 Open Command Prompt
+Press Win + R,
+type cmd, and
+press Enter
 
+#### 1.2 Verify Environment & Dependencies
 ```
 echo === Java ===
 java -version
@@ -198,13 +202,9 @@ echo.
 echo === curl ===
 curl --version
 ```
- ✅ **If all version numbers are displayed** (no `'xxx' is not recognized` errors), proceed to Step 1.
+✅ If all version numbers are displayed (no 'xxx' is not recognized errors), proceed to Step 2.
 
-
-### 1. Open Command Prompt
-Press Win + R,
-type cmd, and
-press Enter
+❌ If any dependencies are missing, go back to the Environment Setup section above.
 
 
 ### 2. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
