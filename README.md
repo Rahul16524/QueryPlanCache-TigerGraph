@@ -28,7 +28,7 @@ In real-world databases, executing queries repeatedly with different parameter v
 | Git | Any version | Latest |
 | Memory | 512 MB | 1 GB |
 | Disk Space | 50 MB | 100 MB |
-| OS | Windows 11 | Any with Java support |
+| OS | Windows 11 | Windows 11 |
 | Internet Connection | Required | Required for cloning repo and downloading JAR |
 
 ## 🔧 Environment Setup
