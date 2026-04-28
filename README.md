@@ -12,80 +12,93 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 | Tool / Module | Version | Purpose |
 |---------------|---------|---------|
-| **Java** | 11+ | Core programming language for caching and normalization |
-| **ANTLR** | 4.13.1 | SQL parsing and AST generation for query normalization |
-| **ConcurrentHashMap** | Java Built-in | Thread-safe cache storage for concurrent query execution |
-| **Visitor Pattern** | Design Pattern | AST traversal to replace literals with placeholders |
-| **UUID** | Java Built-in | Unique identifier generation for query plans |
+| Java | 11+ | Core programming language for caching and normalization |
+| ANTLR | 4.13.2 | SQL parsing and AST generation for query normalization |
+| ConcurrentHashMap | Java Built-in | Thread-safe cache storage for concurrent query execution |
+| Visitor Pattern | Design Pattern | AST traversal to replace literals with placeholders |
+| UUID | Java Built-in | Unique identifier generation for query plans |
+| Git | Latest | Version control and repository cloning |
 
 ### System Requirements
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| **Java JDK** | 11 | 17+ |
-| **ANTLR** | 4.13.1 | 4.13.1 |
-| **Memory** | 512 MB | 1 GB |
-| **Disk Space** | 50 MB | 100 MB |
-| **OS** | Windows/Linux/Mac | Any with Java support |
+| Java JDK | 11 | 17+ |
+| ANTLR | 4.13.2 | 4.13.2 |
+| Git | Any version | Latest |
+| Memory | 512 MB | 1 GB |
+| Disk Space | 50 MB | 100 MB |
+| OS | Windows/Linux/Mac | Any with Java support |
+| Internet Connection | Required | Required for cloning repo and downloading JAR |
 
 ### Required Files
 
 | File | Purpose |
 |------|---------|
-| `antlr-4.13.1-complete.jar` | ANTLR runtime for lexer/parser generation |
-| `SQLite.g4` | ANTLR grammar file for SQL parsing |
+| antlr-4.13.2-complete.jar | ANTLR runtime for lexer/parser generation |
+| SQLite.g4 | ANTLR grammar file for SQL parsing |
+
+### Prerequisites Check
+Before starting, ensure you have:
+
+| Prerequisite | Verification Command |
+|--------------|---------------------|
+| Git installed | `git --version` |
+| Java JDK installed | `java -version` |
+| Internet connection | Required for cloning and downloading JAR |
+
 
 ---
 
 ## 🚀 How to Run
 
-1. Open Command Prompt
+### 1. Open Command Prompt
 Press Win + R,
 type cmd, and
 press Enter
 
 
-3. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
+### 3. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
 ```
 chcp 65001
 ```
 Note: This step prevents box-drawing characters (│, ─, └, etc.) from appearing as ? in the output.
 
-3. Navigate to Desktop (or your preferred location)
+### 3. Navigate to Desktop (or your preferred location)
 ```
 cd /d %USERPROFILE%\Desktop
 ```
 
-4. Create Project Folder
+### 4. Create Project Folder
 ```
 mkdir QueryPlanProject
 ```
-5. Move inside QueryPlanProject folder
+### 5. Move inside QueryPlanProject folder
 ```
 cd QueryPlanProject
 ```
 
-6. Clone the Repository
+### 6. Clone the Repository
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
 ```
 
-7. Enter the Project Directory
+### 7. Enter the Project Directory
 ``` 
 cd QueryPlanCache-TigerGraph
 ```
 
-8. Download ANTLR JAR File
+### 8. Download ANTLR JAR File
 ``` 
 curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
 ```
 
-9. Compile the Project
+### 9. Compile the Project
 ``` 
 javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java
 ```
 
-10. Run the Test Suite
+### 10. Run the Test Suite
 ```
 java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
