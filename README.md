@@ -102,9 +102,43 @@ javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\M
 ```
 java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
+## 📝 Complete One-Line Script (For Advanced Users)
+If you're comfortable with command line and want to run everything automatically, copy and paste this single command:
 
+```
+chcp 65001 && cd /d %USERPROFILE%\Desktop && mkdir QueryPlanProject && cd QueryPlanProject && git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar && javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java && java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
+```
+⚠️ Note for Advanced Users:
+
+This script assumes Git, Java JDK, and curl are already installed and in PATH
+
+The script will stop if any command fails
+
+To also run the demo application, add && java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.app.Main at the end
 
 ---
+
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `'git' is not recognized` | Install Git from https://git-scm.com/download/win |
+| `'curl' is not recognized` | Manually download ANTLR JAR and copy to project folder |
+| `'java' is not recognized` | Install Java JDK and add to PATH |
+| `'javac' is not recognized` | Install Java JDK (not just JRE) |
+| Box-drawing characters show as `?` | Run `chcp 65001` before Java commands |
+| Compilation errors | Verify you're in `QueryPlanCache-TigerGraph` directory |
+| Permission denied | Run Command Prompt as Administrator |
+
+## ✅ Expected Output
+
+| Command | Expected Output |
+|---------|-----------------|
+| `chcp 65001` | `Active code page: 65001` |
+| `git clone` | Shows cloning progress with objects and deltas |
+| `curl` | Shows download progress (100% 2.04M) |
+| `javac` | No output means success |
+| Test Suite | Shows formatted tables with box-drawing characters (│, ─, └, ┐) |
 
 ## Overview
 The cache mechanism uses a multi-layered approach combining query normalization, schema-aware invalidation, and adaptive cache management. Each design decision addresses specific challenges in real-world query caching.
