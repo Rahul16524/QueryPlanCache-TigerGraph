@@ -70,12 +70,12 @@ Note: This step prevents box-drawing characters (│, ─, └, etc.) from appea
 
 ### 3. Navigate to Desktop (or your preferred location)
 ```
-cd /d %USERPROFILE%\Desktop
+cd /d %USERPROFILE%\OneDrive\Desktop 2>nul || cd /d %USERPROFILE%\Desktop
 ```
 
 ### 4. Create Project Folder
 ```
-mkdir QueryPlanProject
+mkdir QueryPlanProject 2>nul
 ```
 ### 5. Move inside QueryPlanProject folder
 ```
