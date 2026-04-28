@@ -40,10 +40,12 @@ In real-world databases, executing queries repeatedly with different parameter v
 ## 🚀 How to Run
 
 1. Open Command Prompt
-Press Win + R, type cmd, and press Enter
+Press Win + R,
+type cmd, and
+press Enter
 
 
-2. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
+3. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
 ```
 chcp 65001
 ```
