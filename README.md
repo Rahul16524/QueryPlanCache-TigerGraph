@@ -32,16 +32,17 @@ In real-world databases, executing queries repeatedly with different parameter v
 | Internet Connection | Required | Required for cloning repo and downloading JAR |
 
 ## 🔧 Environment Setup
-### 1. Install Java JDK 21 (Oracle)
-Download: Oracle JDK 21 MSI Installer
+### 1. Install Java JDK 17 (Oracle)
+Download: Oracle JDK 17 MSI Installer
+```
+https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+```
 
 #### Direct Download Link:
 
-Scroll down to Java SE Development Kit 21.0.10 (latest update)
+Scroll down to Java SE Development Kit 17.0.12 (latest update)
 
 Find Windows x64 msi Installer (164.44 MB)
-
-Accept the Oracle No-Fee Terms and Conditions
 
 Click to download
 
