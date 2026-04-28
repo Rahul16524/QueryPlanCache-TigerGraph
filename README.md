@@ -1128,12 +1128,12 @@ Output :
 
 ### AI Tools Used in Development
 
-This project was developed with limited assistance from AI tools, primarily for structural guidance and documentation clarity. All core logic, design flow, and implementation decisions were created independently.
+This project incorporated modest AI assistance, focused mainly on structural recommendations and improving documentation readability. All fundamental logic, design choices, and implementation work were carried out independently.
 
 ### Code Generation & Architecture
 
-- Used AI to understand **ANTLR parse tree traversal** concepts and explore possible implementation patterns
-- Took code templates and structure suggestions for **mock plan generation**, **complexity scoring**, and **testing setup** — but core logic and implementation were self-designed
+- Used AI to gain familiarity with ANTLR parse tree traversal concepts and to explore potential implementation strategies
+- Looked at code templates and structural suggestions to help shape mock plan outlines, complexity calculations, and test arrangements — but the core logic and ultimate implementation were independently created from scratch.
 - Received minor syntax corrections and readability improvements
 - Independently implemented **cache eviction policies (LRU/LFU)** and **query normalization logic**
 - Self-designed performance comparison logic including hit/miss ratio and speedup factor calculations
