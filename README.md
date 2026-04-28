@@ -181,6 +181,26 @@ The commands below are designed for **Windows**. Follow the instructions as writ
 
 ## 🚀 How to Run  (if environment is setup)
 
+### Step 0: Confirm Environment & Dependencies
+*(If any are missing, configure them using the setup steps above)*
+
+```
+echo === Java ===
+java -version
+javac -version
+echo %JAVA_HOME%
+
+echo.
+echo === Git ===
+git --version
+
+echo.
+echo === curl ===
+curl --version
+```
+ ✅ **If all version numbers are displayed** (no `'xxx' is not recognized` errors), proceed to Step 1.
+
+
 ### 1. Open Command Prompt
 Press Win + R,
 type cmd, and
