@@ -47,67 +47,47 @@ Press Win + R, type cmd, and press Enter
 ```
 chcp 65001
 ```
+Note: This step prevents box-drawing characters (│, ─, └, etc.) from appearing as ? in the output.
 
 3. Navigate to Desktop (or your preferred location)
 ```
-cmd
 cd /d %USERPROFILE%\Desktop
 ```
-Note: This step prevents box-drawing characters (│, ─, └, etc.) from appearing as ? in the output.
 
 4. Create Project Folder
 ```
 mkdir QueryPlanProject
 ```
+move inside QueryPlanPorject folder
 ```
 cd QueryPlanProject
 ```
 
 5. Clone the Repository
-``` cmd
+```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
 ```
 
 6. Enter the Project Directory
-``` cmd
+``` 
 cd QueryPlanCache-TigerGraph
 ```
 
 7. Download ANTLR JAR File
-``` cmd
+``` 
 curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
 ```
 
 8. Compile the Project
-``` cmd
+``` 
 javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java
 ```
 
 9. Run the Test Suite
 ```
-cmd
 java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
 ```
 
-
-Step 1: Generate ANTLR Parser Files
-```
-java -Xmx500M -cp "antlr-4.13.1-complete.jar" org.antlr.v4.Tool ^
-  -Dlanguage=Java -visitor -listener -o src/main/java/com/querycache/parser ^
-  src/main/java/com/querycache/parser/SQLite.g4
-```
-Step 2: Compile All Java Files
-```
-javac -cp ".;antlr-4.13.1-complete.jar" src/main/java/com/querycache/**/*.java
-```
-Step 3: Run the Test Suite
-```
-java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.test.QueryPlanCacheTest
-```
-Step 4: Run Demo Application
-```
-java -cp ".;src/main/java;antlr-4.13.1-complete.jar" com.querycache.app.Main
-```
 
 ---
 
