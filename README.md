@@ -181,13 +181,14 @@ Step 4: Run the test suite
 docker run --rm queryplancache
 ```
 
-### Complete One-Line Script
+### Complete One-Line Script 
 Copy and paste this entire command:
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && docker build -t queryplancache . && docker run --rm queryplancache
 ```
 
 ## What Docker Does Automatically
+
     Sets up Java 21 environment
 
     Downloads and configures ANTLR 4.13.2 parser
