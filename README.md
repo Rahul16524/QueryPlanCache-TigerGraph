@@ -149,14 +149,54 @@ https://www.docker.com/products/docker-desktop
 ```
 
 ### Verify Docker Installation
-Open **Command Prompt** and run:
+- Open **Command Prompt** and run:
 
 ```
 docker --version
 ```
+Expected Output:
+```
+Docker version 24.0.7, build afdd53b
+```
 
+## Run the Project 
 
+Step 1: Clone the repository
+```
+git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
+```
 
+Step 2: Enter the project directory
+```
+cd QueryPlanCache-TigerGraph
+```
+
+Step 3: Build the Docker image
+```
+docker build -t queryplancache .
+```
+
+Step 4: Run the test suite
+```
+docker run --rm queryplancache
+```
+
+### Complete One-Line Script
+Copy and paste this entire command:
+```
+git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && docker build -t queryplancache . && docker run --rm queryplancache
+```
+
+## What Docker Does Automatically
+    Sets up Java 21 environment
+
+    Downloads and configures ANTLR 4.13.2 parser
+
+    Compiles all Java source files
+
+    Runs the complete test suite with 17 test queries
+
+    Cleans up container after completion (--rm flag)
 
 
 
