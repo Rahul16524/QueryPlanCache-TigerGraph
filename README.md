@@ -10,29 +10,6 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 # Query Plan Cache System
 
-## 🔧 Technologies & Tools Used
-
-| Tool / Module | Version | Purpose |
-|---------------|---------|---------|
-| Java | 11+ | Core programming language for caching and normalization |
-| ANTLR | 4.13.2 | SQL parsing and AST generation for query normalization |
-| ConcurrentHashMap | Java Built-in | Thread-safe cache storage for concurrent query execution |
-| Visitor Pattern | Design Pattern | AST traversal to replace literals with placeholders |
-| UUID | Java Built-in | Unique identifier generation for query plans |
-| Git | Latest | Version control and repository cloning |
-
-### System Requirements
-
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| Java JDK | 11 | 17+ |
-| ANTLR | 4.13.2 | 4.13.2 |
-| Git | Any version | Latest |
-| Memory | 512 MB | 1 GB |
-| Disk Space | 50 MB | 100 MB |
-| OS | Windows 11 | Windows 11 |
-| Internet Connection | Required | Required for cloning repo and downloading JAR |
-
 ## 🏗️ System Architecture
 
 ### 📐 OOP Hierarchy & Call Flow Diagram
@@ -147,6 +124,30 @@ src/main/java/com/querycache/
 | **SQLiteParser.java** | `parser/` | ⚙️ ANTLR-generated parser (builds AST from tokens) |
 | **SQLiteLexer.java** | `parser/` | 🔠 ANTLR-generated lexer (tokenizes SQL string) |
 | **SQLite.g4** | `resources/` | 📜 ANTLR grammar source (lexer & parser rules) |
+
+## 🔧 Technologies & Tools Used
+
+| Tool / Module | Version | Purpose |
+|---------------|---------|---------|
+| Java | 11+ | Core programming language for caching and normalization |
+| ANTLR | 4.13.2 | SQL parsing and AST generation for query normalization |
+| ConcurrentHashMap | Java Built-in | Thread-safe cache storage for concurrent query execution |
+| Visitor Pattern | Design Pattern | AST traversal to replace literals with placeholders |
+| UUID | Java Built-in | Unique identifier generation for query plans |
+| Git | Latest | Version control and repository cloning |
+
+### System Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Java JDK | 11 | 17+ |
+| ANTLR | 4.13.2 | 4.13.2 |
+| Git | Any version | Latest |
+| Memory | 512 MB | 1 GB |
+| Disk Space | 50 MB | 100 MB |
+| OS | Windows 11 | Windows 11 |
+| Internet Connection | Required | Required for cloning repo and downloading JAR |
+
 
 ## 🔧 Environment Setup
 ### 1. Install Java JDK 21 (Oracle)
