@@ -77,35 +77,35 @@ src/main/java/com/querycache/
 │
 │
 ├── service/
-│ └── QueryService.java                 # 🎮 Orchestrator - main cache logic
+│ └── QueryService.java                 #  Orchestrator - main cache logic
 │
 ├── cache/
-│ └── QueryPlanCache.java               # 💾 Cache storage with LRU eviction
+│ └── QueryPlanCache.java               #  Cache storage with LRU eviction
 │
 ├── model/
-│ └── QueryPlan.java                    # 📦 Domain object for execution plans
+│ └── QueryPlan.java                    #  Domain object for execution plans
 │
 ├── metrics/
-│ └── CacheMetrics.java                 # 📊 Performance tracking & telemetry
+│ └── CacheMetrics.java                 #  Performance tracking & telemetry
 │
 ├── parser/
-│ ├── SQLiteParserService.java          # 🔄 Parser wrapper service
-│ ├── QueryVisitor.java                 # ✨ AST visitor (normalizes queries)
-│ ├── SQLiteVisitor.java                # 🎯 ANTLR-generated visitor interface
-│ ├── SQLiteBaseVisitor.java            # 📚 ANTLR-generated base visitor
-│ ├── SQLiteParser.java                 # ⚙️ ANTLR-generated parser
-│ └── SQLiteLexer.java                  # 🔠 ANTLR-generated lexer
+│ ├── SQLiteParserService.java          #  Parser wrapper service
+│ ├── QueryVisitor.java                 #  AST visitor (normalizes queries)
+│ ├── SQLiteVisitor.java                #  ANTLR-generated visitor interface
+│ ├── SQLiteBaseVisitor.java            #  ANTLR-generated base visitor
+│ ├── SQLiteParser.java                 #  ANTLR-generated parser
+│ └── SQLiteLexer.java                  #  ANTLR-generated lexer
 │
 ├── test/
-│ └── QueryPlanCacheTest.java           # ✅ Comprehensive test suite ( Entry Point )
+│ └── QueryPlanCacheTest.java           #  Comprehensive test suite ( Entry Point )
 │
 └── resources/
-    └── SQLite.g4                       # 📜 ANTLR grammar file (source)
+    └── SQLite.g4                       #  ANTLR grammar file (source)
     Generated Artifacts (ANTLR):
-    ├── SQLiteLexer.tokens              # 🏷️ Token definitions
-    ├── SQLiteLexer.interp              # 📖 Lexer interpretation data
-    ├── SQLite.tokens                   # 🏷️ Parser token definitions
-    └── SQLite.interp                   # 📖 Parser interpretation data
+    ├── SQLiteLexer.tokens              #  Token definitions
+    ├── SQLiteLexer.interp              #  Lexer interpretation data
+    ├── SQLite.tokens                   #  Parser token definitions
+    └── SQLite.interp                   #  Parser interpretation data
 ```
 
 ### 📋 File Purpose Summary
@@ -186,7 +186,7 @@ Copy and paste this entire command:
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && docker build -t queryplancache . && docker run --rm queryplancache
 ```
-
+```
 ## What Docker Does Automatically
 
     Sets up Java 21 environment
