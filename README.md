@@ -8,6 +8,67 @@ This project implements a **Query Plan Caching Mechanism** in Java that optimize
 
 In real-world databases, executing queries repeatedly with different parameter values triggers redundant plan generation, wasting computation time. For example, an e-commerce application might execute `SELECT * FROM orders WHERE customer_id = 101` and `SELECT * FROM orders WHERE customer_id = 202` thousands of times per day. Without caching, the database generates a nearly identical execution plan each time, consuming CPU cycles and increasing response time. This project addresses this inefficiency by implementing a query plan cache that recognizes structural similarity between queries and reuses existing plans.
 
+# Query Plan Cache System
+
+## OOP Hierarchy & Call Flow Diagram
+
+```mermaid
+flowchart TB
+    subgraph "ENTRY POINTS"
+        TEST[QueryPlanCacheTest.java<br/>Test Suite<br/><b>Primary Entry Point</b>]
+    end
+
+    subgraph "SERVICE LAYER"
+        QS[QueryService.java<br/>Orchestrator]
+    end
+
+    subgraph "PARSING & NORMALIZATION"
+        PARSER[SQLiteParserService.java<br/>Parser Wrapper]
+        LEXER[SQLiteLexer.java<br/>ANTLR Lexer]
+        PARS[SQLiteParser.java<br/>ANTLR Parser]
+        VISITOR[QueryVisitor.java<br/>Normalizer]
+        BASE_VISITOR[SQLiteBaseVisitor<br/>extends AbstractParseTreeVisitor]
+        VISITOR_INTERFACE[SQLiteVisitor<T><br/>interface]
+    end
+
+    subgraph "CACHE LAYER"
+        CACHE[QueryPlanCache.java<br/>Cache Manager]
+        PLAN[QueryPlan.java<br/>Domain Model]
+        METRICS[CacheMetrics.java<br/>Telemetry]
+    end
+
+    subgraph "INNER CLASSES (Helper Containers)"
+        TEST_STATS[TestStats<br/>Static inner class]
+        QUERY_EXEC[QueryExecution<br/>Static inner class]
+    end
+
+    TEST ==>|executes| QS
+    TEST -.->|one-time setup| PARSER
+
+    QS -->|uses| CACHE
+    QS -->|uses| METRICS
+    QS -->|uses| PARSER
+    QS -->|creates| PLAN
+
+    PARSER -->|creates| LEXER
+    PARSER -->|creates| PARS
+    PARSER -->|creates & uses| VISITOR
+    VISITOR -.->|extends| BASE_VISITOR
+    BASE_VISITOR -.->|implements| VISITOR_INTERFACE
+
+    CACHE -->|stores| PLAN
+
+    TEST -.->|contains| TEST_STATS
+    TEST -.->|contains| QUERY_EXEC
+
+    style TEST fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    style QS fill:#fff3e0,stroke:#f59f00
+    style CACHE fill:#e8f5e9,stroke:#2b8a3e
+    style PARSER fill:#f3e5f5,stroke:#9c27b0
+    style TEST_STATS fill:#e3fafc,stroke:#0ca678
+    style QUERY_EXEC fill:#e3fafc,stroke:#0ca678
+```
+
 ## 🔧 Technologies & Tools Used
 
 | Tool / Module | Version | Purpose |
