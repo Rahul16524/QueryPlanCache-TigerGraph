@@ -98,8 +98,6 @@ flowchart TB
 ```
 src/main/java/com/querycache/
 │
-├── app/
-│ └── Main.java # 🚀 Demo application entry point
 │
 ├── service/
 │ └── QueryService.java # 🎮 Orchestrator - main cache logic
@@ -122,16 +120,15 @@ src/main/java/com/querycache/
 │ └── SQLiteLexer.java # 🔠 ANTLR-generated lexer
 │
 ├── test/
-│ └── QueryPlanCacheTest.java # ✅ Comprehensive test suite
+│ └── QueryPlanCacheTest.java # ✅ Comprehensive test suite ( Entry Point )
 │
 └── resources/
-└── SQLite.g4 # 📜 ANTLR grammar file (source)
-
-Generated Artifacts (ANTLR):
-├── SQLiteLexer.tokens # 🏷️ Token definitions
-├── SQLiteLexer.interp # 📖 Lexer interpretation data
-├── SQLite.tokens # 🏷️ Parser token definitions
-└── SQLite.interp # 📖 Parser interpretation data
+    └── SQLite.g4 # 📜 ANTLR grammar file (source)
+    Generated Artifacts (ANTLR):
+    ├── SQLiteLexer.tokens # 🏷️ Token definitions
+    ├── SQLiteLexer.interp # 📖 Lexer interpretation data
+    ├── SQLite.tokens # 🏷️ Parser token definitions
+    └── SQLite.interp # 📖 Parser interpretation data
 ```
 
 ### 📋 File Purpose Summary
