@@ -464,7 +464,20 @@ Why immediate eviction on invalid:
     Keeps cache size accurate
     
     Avoids repeated validation failures for same query
+---
+### 9. Plan Generation Time Simulation
 
+**Goal:** Simulate realistic query planning cost without an actual database.
+
+**Approach - Randomized Delay:**
+
+```
+private static final int PLAN_GEN_BASE_TIME = 45;  // 45ms base
+
+// Simulate plan generation (45-65ms range)
+Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 20));
+// Range: 45ms to 65ms
+```
 ---
 ### 7. Table Extraction Method
 Goal: Identify which tables a query accesses for invalidation.
