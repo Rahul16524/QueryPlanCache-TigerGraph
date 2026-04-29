@@ -10,65 +10,6 @@ In real-world databases, executing queries repeatedly with different parameter v
 
 # Query Plan Cache System
 
-## OOP Hierarchy & Call Flow Diagram
-
-```mermaid
-flowchart TB
-    subgraph "ENTRY POINTS"
-        TEST[QueryPlanCacheTest.java<br/>Test Suite<br/><b>Primary Entry Point</b>]
-    end
-
-    subgraph "SERVICE LAYER"
-        QS[QueryService.java<br/>Orchestrator]
-    end
-
-    subgraph "PARSING & NORMALIZATION"
-        PARSER[SQLiteParserService.java<br/>Parser Wrapper]
-        LEXER[SQLiteLexer.java<br/>ANTLR Lexer]
-        PARS[SQLiteParser.java<br/>ANTLR Parser]
-        VISITOR[QueryVisitor.java<br/>Normalizer]
-        BASE_VISITOR[SQLiteBaseVisitor<br/>extends AbstractParseTreeVisitor]
-        VISITOR_INTERFACE[SQLiteVisitor<T><br/>interface]
-    end
-
-    subgraph "CACHE LAYER"
-        CACHE[QueryPlanCache.java<br/>Cache Manager]
-        PLAN[QueryPlan.java<br/>Domain Model]
-        METRICS[CacheMetrics.java<br/>Telemetry]
-    end
-
-    subgraph "INNER CLASSES (Helper Containers)"
-        TEST_STATS[TestStats<br/>Static inner class]
-        QUERY_EXEC[QueryExecution<br/>Static inner class]
-    end
-
-    TEST ==>|executes| QS
-    TEST -.->|one-time setup| PARSER
-
-    QS -->|uses| CACHE
-    QS -->|uses| METRICS
-    QS -->|uses| PARSER
-    QS -->|creates| PLAN
-
-    PARSER -->|creates| LEXER
-    PARSER -->|creates| PARS
-    PARSER -->|creates & uses| VISITOR
-    VISITOR -.->|extends| BASE_VISITOR
-    BASE_VISITOR -.->|implements| VISITOR_INTERFACE
-
-    CACHE -->|stores| PLAN
-
-    TEST -.->|contains| TEST_STATS
-    TEST -.->|contains| QUERY_EXEC
-
-    style TEST fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
-    style QS fill:#fff3e0,stroke:#f59f00
-    style CACHE fill:#e8f5e9,stroke:#2b8a3e
-    style PARSER fill:#f3e5f5,stroke:#9c27b0
-    style TEST_STATS fill:#e3fafc,stroke:#0ca678
-    style QUERY_EXEC fill:#e3fafc,stroke:#0ca678
-```
-
 ## 🔧 Technologies & Tools Used
 
 | Tool / Module | Version | Purpose |
@@ -345,6 +286,125 @@ To also run the demo application, add && java -cp ".;src;antlr-4.13.2-complete.j
 | `javac` | No output means success |
 | Test Suite | Shows formatted tables with box-drawing characters (│, ─, └, ┐) |
 
+
+## 🏗️ System Architecture
+
+### 📐 OOP Hierarchy & Call Flow Diagram
+
+```mermaid
+flowchart TB
+    subgraph "ENTRY POINTS"
+        TEST[QueryPlanCacheTest.java<br/>Test Suite<br/><b>Primary Entry Point</b>]
+    end
+
+    subgraph "SERVICE LAYER"
+        QS[QueryService.java<br/>Orchestrator]
+    end
+
+    subgraph "PARSING & NORMALIZATION"
+        PARSER[SQLiteParserService.java<br/>Parser Wrapper]
+        LEXER[SQLiteLexer.java<br/>ANTLR Lexer]
+        PARS[SQLiteParser.java<br/>ANTLR Parser]
+        VISITOR[QueryVisitor.java<br/>Normalizer]
+        BASE_VISITOR[SQLiteBaseVisitor<br/>extends AbstractParseTreeVisitor]
+        VISITOR_INTERFACE[SQLiteVisitor<T><br/>interface]
+    end
+
+    subgraph "CACHE LAYER"
+        CACHE[QueryPlanCache.java<br/>Cache Manager]
+        PLAN[QueryPlan.java<br/>Domain Model]
+        METRICS[CacheMetrics.java<br/>Telemetry]
+    end
+
+    subgraph "INNER CLASSES (Helper Containers)"
+        TEST_STATS[TestStats<br/>Static inner class]
+        QUERY_EXEC[QueryExecution<br/>Static inner class]
+    end
+
+    TEST ==>|executes| QS
+    TEST -.->|one-time setup| PARSER
+
+    QS -->|uses| CACHE
+    QS -->|uses| METRICS
+    QS -->|uses| PARSER
+    QS -->|creates| PLAN
+
+    PARSER -->|creates| LEXER
+    PARSER -->|creates| PARS
+    PARSER -->|creates & uses| VISITOR
+    VISITOR -.->|extends| BASE_VISITOR
+    BASE_VISITOR -.->|implements| VISITOR_INTERFACE
+
+    CACHE -->|stores| PLAN
+
+    TEST -.->|contains| TEST_STATS
+    TEST -.->|contains| QUERY_EXEC
+
+    style TEST fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    style QS fill:#fff3e0,stroke:#f59f00
+    style CACHE fill:#e8f5e9,stroke:#2b8a3e
+    style PARSER fill:#f3e5f5,stroke:#9c27b0
+    style TEST_STATS fill:#e3fafc,stroke:#0ca678
+    style QUERY_EXEC fill:#e3fafc,stroke:#0ca678
+```
+
+### 📁 Project Structure Tree
+
+### 📁 Project Structure Tree
+src/main/java/com/querycache/
+│
+├── app/
+│ └── Main.java # 🚀 Demo application entry point
+│
+├── service/
+│ └── QueryService.java # 🎮 Orchestrator - main cache logic
+│
+├── cache/
+│ └── QueryPlanCache.java # 💾 Cache storage with LRU eviction
+│
+├── model/
+│ └── QueryPlan.java # 📦 Domain object for execution plans
+│
+├── metrics/
+│ └── CacheMetrics.java # 📊 Performance tracking & telemetry
+│
+├── parser/
+│ ├── SQLiteParserService.java # 🔄 Parser wrapper service
+│ ├── QueryVisitor.java # ✨ AST visitor (normalizes queries)
+│ ├── SQLiteVisitor.java # 🎯 ANTLR-generated visitor interface
+│ ├── SQLiteBaseVisitor.java # 📚 ANTLR-generated base visitor
+│ ├── SQLiteParser.java # ⚙️ ANTLR-generated parser
+│ └── SQLiteLexer.java # 🔠 ANTLR-generated lexer
+│
+├── test/
+│ └── QueryPlanCacheTest.java # ✅ Comprehensive test suite
+│
+└── resources/
+└── SQLite.g4 # 📜 ANTLR grammar file (source)
+
+Generated Artifacts (ANTLR):
+├── SQLiteLexer.tokens # 🏷️ Token definitions
+├── SQLiteLexer.interp # 📖 Lexer interpretation data
+├── SQLite.tokens # 🏷️ Parser token definitions
+└── SQLite.interp # 📖 Parser interpretation data
+
+### 📋 File Purpose Summary
+
+| File | Path | Purpose |
+|------|------|---------|
+| **Main.java** | `app/` | 🚀 Demo application showing 3 scenarios: NO cache, WITH cache, Schema change invalidation |
+| **QueryPlanCacheTest.java** | `test/` | ✅ Comprehensive test suite with 17 queries, pattern matching, and validation |
+| **QueryService.java** | `service/` | 🎮 Orchestrator - Executes queries, checks cache, generates plans, tracks metrics |
+| **QueryPlanCache.java** | `cache/` | 💾 In-memory cache with LRU eviction and schema version tracking |
+| **QueryPlan.java** | `model/` | 📦 Domain entity containing plan ID, normalized query, cost, access stats |
+| **CacheMetrics.java** | `metrics/` | 📊 Telemetry collector for hit ratio, execution times |
+| **SQLiteParserService.java** | `parser/` | 🔄 Wrapper for ANTLR - tokenization, parsing, normalization |
+| **QueryVisitor.java** | `parser/` | ✨ Core normalizer - Replaces literals (numbers, strings) with '?' |
+| **SQLiteBaseVisitor.java** | `parser/` | 📚 ANTLR-generated abstract visitor (extends AbstractParseTreeVisitor) |
+| **SQLiteVisitor.java** | `parser/` | 🎯 ANTLR-generated visitor interface (80+ visit methods) |
+| **SQLiteParser.java** | `parser/` | ⚙️ ANTLR-generated parser (builds AST from tokens) |
+| **SQLiteLexer.java** | `parser/` | 🔠 ANTLR-generated lexer (tokenizes SQL string) |
+| **SQLite.g4** | `resources/` | 📜 ANTLR grammar source (lexer & parser rules) |
 ## Overview
 The cache mechanism uses a multi-layered approach combining query normalization, schema-aware invalidation, and adaptive cache management. Each design decision addresses specific challenges in real-world query caching.
 
