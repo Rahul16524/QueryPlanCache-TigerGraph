@@ -156,7 +156,7 @@ https://www.docker.com/products/docker-desktop
 After installation, restart your computer
 
 
-2. Git (Required for cloning the repository)
+**2. Git** (Required for cloning the repository)
 
 Check if Git is installed:
 
@@ -199,7 +199,7 @@ docker build -t queryplancache .
 docker run --rm queryplancache
 ```
 
-### Complete One-Line Script 
+### Complete One-Line Script (Alternative, after prerequisites are installed)
 Copy and paste this entire command:
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && docker build -t queryplancache . && docker run --rm queryplancache
