@@ -130,7 +130,7 @@ src/main/java/com/querycache/
 
 | Tool / Module | Version | Purpose |
 |---------------|---------|---------|
-| Java | 11+ | Core programming language for caching and normalization |
+| Java | 21 | Core programming language for caching and normalization |
 | ANTLR | 4.13.2 | SQL parsing and AST generation for query normalization |
 | ConcurrentHashMap | Java Built-in | Thread-safe cache storage for concurrent query execution |
 | Visitor Pattern | Design Pattern | AST traversal to replace literals with placeholders |
