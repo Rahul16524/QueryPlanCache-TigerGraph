@@ -137,271 +137,42 @@ src/main/java/com/querycache/
 | UUID | Java Built-in | Unique identifier generation for query plans |
 | Git | Latest | Version control and repository cloning |
 
-### System Requirements
-
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| Java JDK | 11 | 17+ |
-| ANTLR | 4.13.2 | 4.13.2 |
-| Git | Any version | Latest |
-| Memory | 512 MB | 1 GB |
-| Disk Space | 50 MB | 100 MB |
-| OS | Windows 11 | Windows 11 |
-| Internet Connection | Required | Required for cloning repo and downloading JAR |
 
 
-## 🔧 Environment Setup
-### 1. Install Java JDK 21 (Oracle)
-Download: Oracle JDK 17 MSI Installer
-#### Direct Download Link:
+## 🐳 Quick Start with Docker (Easiest Way)
+
+### Prerequisites
+- **Docker Desktop** installed (if not, download from below link)
+
 ```
-https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html
+https://www.docker.com/products/docker-desktop
+```
+
+### Verify Docker Installation
+Open **Command Prompt** and run:
+
+```
+docker --version
 ```
 
 
 
-Scroll down to Java SE Development Kit 21.0.10 (latest update)
-
-Find Windows x64 msi Installer (164.44 MB)
-
-Click to download
-
-#### Installation Steps:
-
-Run the downloaded .msi file
-
-Click Next on the welcome screen
-
-Click Next to accept the default installation path (C:\Program Files\Java\jdk-21.0.10)
-
-Click Install to begin installation
-
-Click Finish when complete
-
-### Set JAVA_HOME Environment Variable:
-
-**Set JAVA_HOME Environment Variable:**
-
-| Step | Action |
-|------|--------|
-| 1 | Press `Win + S`, type "Environment Variables", select "Edit the system environment variables" |
-| 2 | Click "Environment Variables..." |
-| 3 | Under System variables, click "New..." |
-| 4 | Set `Variable name` = `JAVA_HOME` |
-| 5 | Set `Variable value` = `C:\Program Files\Java\jdk-21.0.10` |
-| 6 | Click "OK" |
-| 7 | Under System variables, find and select `Path`, click "Edit..." |
-| 8 | Click "New" and add `%JAVA_HOME%\bin` |
-| 9 | Click "OK" on all windows |
-
-### Verify Installation (Open new Command Prompt):
-
-```
-java -version
-javac -version
-echo %JAVA_HOME%
-```
-### Expected Output:
-
-```
-java version "21.0.10" 2025-01-21 LTS
-Java(TM) SE Runtime Environment (build 21.0.10+xx-LTS-xxx)
-javac 21.0.10
-C:\Program Files\Java\jdk-21.0.10
-```
-
-### 2. Install Git
-Download: Git for Windows (64-bit version)
-
-Installation Steps:
-
-Run the installer
-
-Important settings to select:
-
-Installation path: C:\Program Files\Git (default)
-
-PATH environment: Select "Git from the command line and also from 3rd-party software"
-
-Complete the installation
-
-Verify Installation:
-
-cmd
-```
-git --version
-```
-Expected Output:
-```
-git version 2.xx.x.windows.x
-```
-
-### 3. Install/Verify curl
-Check if already installed (Windows 10/11 have it pre-installed):
-
-```
-curl --version
-```
-If not installed:
-
-Download from 
-```
-curl.se/windows
-```
-
-Extract ZIP to C:\Program Files\curl\
-
-Add C:\Program Files\curl\bin to System PATH
-
-Verify Installation:
-
-```
-curl --version
-```
-4. Final Verification
-Run these commands to ensure everything is ready:
-
-```
-echo === Java ===
-java -version
-javac -version
-echo %JAVA_HOME%
-
-echo === Git ===
-git --version
-
-echo === curl ===
-curl --version
-```
-
-### Required Files
-
-| File | Purpose |
-|------|---------|
-| antlr-4.13.2-complete.jar | ANTLR runtime for lexer/parser generation |
-| SQLite.g4 | ANTLR grammar file for SQL parsing |
-
-### Prerequisites Check
-Before starting, ensure you have:
-
-| Prerequisite | Verification Command |
-|--------------|---------------------|
-| Git installed | `git --version` |
-| Java JDK installed | `java -version` |
-| curl installed | `curl -version` |
-| Internet connection | Required for cloning and downloading JAR |
 
 
----
-## 🖥️ Platform Support
-
-### Windows Users
-The commands below are designed for **Windows**. Follow the instructions as written.
-
-## 🚀 How to Run  (if environment is setup)
-
-### Step 1: Open Command Prompt & Verify Environment
-#### 1.1 Open Command Prompt
-Press Win + R,
-type cmd, and
-press Enter
-
-#### 1.2 Verify Environment & Dependencies
-```
-echo === Java ===
-java -version
-javac -version
-echo %JAVA_HOME%
-
-echo.
-echo === Git ===
-git --version
-
-echo.
-echo === curl ===
-curl --version
-```
-✅ If all version numbers are displayed (no 'xxx' is not recognized errors), proceed to Step 2.
-
-❌ If any dependencies are missing, go back to the Environment Setup section above.
 
 
-### 2. Set Console to UTF-8 Encoding (IMPORTANT - Fixes character display issues)
-```
-chcp 65001
-```
-Note: This step prevents box-drawing characters (│, ─, └, etc.) from appearing as ? in the output.
 
-### 3. Create Project Folder(in current directory)
-```
-mkdir QueryPlanProject 2>nul
-```
-### 4. Move inside QueryPlanProject folder
-```
-cd QueryPlanProject
-```
 
-### 5. Clone the Repository
-```
-git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
-```
 
-### 6. Enter the Project Directory
-``` 
-cd QueryPlanCache-TigerGraph
-```
 
-### 7. Download ANTLR JAR File
-``` 
-curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar
-```
 
-### 8. Compile the Project
-``` 
-javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java
-```
 
-### 9. Run the Test Suite
-```
-java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
-```
-## 📝 Complete One-Line Script (For Advanced Users)
-If you're comfortable with command line and want to run everything automatically, copy and paste this single command:
 
-```
-chcp 65001 && cd /d %USERPROFILE%\Desktop && mkdir QueryPlanProject && cd QueryPlanProject && git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && curl -O https://www.antlr.org/download/antlr-4.13.2-complete.jar && javac -encoding UTF-8 -cp ".;antlr-4.13.2-complete.jar" src\com\querycache\app\Main.java src\com\querycache\cache\QueryPlanCache.java src\com\querycache\metrics\CacheMetrics.java src\com\querycache\model\QueryPlan.java src\com\querycache\parser\*.java src\com\querycache\service\QueryService.java src\com\querycache\test\QueryPlanCacheTest.java && java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.test.QueryPlanCacheTest
-```
-⚠️ Note for Advanced Users:
 
-This script assumes Git, Java JDK, and curl are already installed and in PATH
 
-The script will stop if any command fails
 
-To also run the demo application, add && java -cp ".;src;antlr-4.13.2-complete.jar" com.querycache.app.Main at the end
 
----
 
-## 🔧 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| `'git' is not recognized` | Install Git from https://git-scm.com/download/win |
-| `'curl' is not recognized` | Manually download ANTLR JAR and copy to project folder |
-| `'java' is not recognized` | Install Java JDK and add to PATH |
-| `'javac' is not recognized` | Install Java JDK (not just JRE) |
-| Box-drawing characters show as `?` | Run `chcp 65001` before Java commands |
-| Compilation errors | Verify you're in `QueryPlanCache-TigerGraph` directory |
-| Permission denied | Run Command Prompt as Administrator |
-
-## ✅ Expected Output
-
-| Command | Expected Output |
-|---------|-----------------|
-| `chcp 65001` | `Active code page: 65001` |
-| `git clone` | Shows cloning progress with objects and deltas |
-| `curl` | Shows download progress (100% 2.04M) |
-| `javac` | No output means success |
-| Test Suite | Shows formatted tables with box-drawing characters (│, ─, └, ┐) |
 
 
 
