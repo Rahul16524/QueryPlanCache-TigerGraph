@@ -154,9 +154,9 @@ docker --version
 ```
 
 If not installed (shows error), download from:
-```
+
 https://www.docker.com/products/docker-desktop
-```
+
 After installation, restart your computer
 
 
@@ -169,9 +169,9 @@ git --version
 ```
 
 If not installed (shows error), download from:
-```
+
 https://git-scm.com/downloads
-```
+
 During installation, select: "Git from the command line and also from 3rd-party software"
 
 
