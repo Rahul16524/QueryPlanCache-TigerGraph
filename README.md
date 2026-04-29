@@ -464,7 +464,6 @@ Why immediate eviction on invalid:
     Keeps cache size accurate
     
     Avoids repeated validation failures for same query
----
 
 ---
 ### 7. Table Extraction Method
