@@ -144,7 +144,6 @@ src/main/java/com/querycache/
 
 Press Win + R, type cmd, and press Enter
 
-### Prerequisites
 **1. 🐳 Docker Desktop** (Required for containerization)
 
 
@@ -179,6 +178,8 @@ During installation, select: "Git from the command line and also from 3rd-party 
 
 ## 🚀 Run the Project 
 
+
+>  Before running any Docker commands, ensure **Docker Desktop is running** in the background. 
 **Step 1:** Open Command Prompt (if not already open)
 
 Press Win + R, type cmd, and press Enter
