@@ -159,7 +159,7 @@ Expected Output:
 Docker version 24.0.7, build afdd53b
 ```
 
-## Run the Project 
+## 🚀 Run the Project 
 
 Step 1: Clone the repository
 ```
