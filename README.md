@@ -592,20 +592,13 @@ SQL Query: SELECT * FROM users WHERE id = 101
 │                 │                                    │ │    TableExtractor.extractTables(query)      │ │
 │                 │                                    │ │    File: TableExtractor.java, Line: 45      │ │
 │                 │                                    │ │                                                 │ │
-│                 │                                    │ │ c) Calculate cost:                          │ │
-│                 │                                    │ │    CostCalculator.calculate(query)          │ │
-│                 │                                    │ │    - Check indexes available                │ │
-│                 │                                    │ │    - Estimate row counts                    │ │
-│                 │                                    │ │    - Determine join strategies              │ │
-│                 │                                    │ │    File: CostCalculator.java, Line: 123     │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ d) Choose access method:                    │ │
+│                 │                                    │ │ c) Choose access method:                    │ │
 │                 │                                    │ │    - Primary key lookup?                    │ │
 │                 │                                    │ │    - Index scan?                            │ │
 │                 │                                    │ │    - Full table scan?                       │ │
 │                 │                                    │ │    File: AccessPathSelector.java, Line: 67  │ │
 │                 │                                    │ │                                                 │ │
-│                 │                                    │ │ e) Thread.sleep(10-45ms) [SIMULATE WORK]    │ │
+│                 │                                    │ │ d) Thread.sleep(10-45ms) [SIMULATE WORK]    │ │
 │                 │                                    │ │    File: ExecutionPlanGenerator.java, L:201 │ │
 │                 │                                    │ └─────────────────────────────────────────────┘ │
 │                 │                                    └────────────────────────┬────────────────────────┘
@@ -893,14 +886,14 @@ public QueryPlan execute(String query) {
       Pattern: Users by ID (Pattern 1)
 
       🔄 Generated new plan (cache disabled)
-      📊 Plan ID: 22e48925 | Cost:  25.00 | Time: 1716 ms
+      📊 Plan ID: 22e48925 | Time: 1716 ms
       🔍 Normalized: select * from users where id = ?
 
   Q2: SELECT * FROM users WHERE id = 2
       Pattern: Users by ID (Pattern 1 - same)
 
       🔄 Generated new plan (cache disabled)
-      📊 Plan ID: 86b4d92e | Cost:  25.00 | Time:  33 ms
+      📊 Plan ID: 86b4d92e | Time:  33 ms
       🔍 Normalized: select * from users where id = ?
 ```
 
@@ -926,14 +919,14 @@ Output :
       Pattern: Users by ID (Pattern 1)
 
       ❌ CACHE MISS - Generated new plan
-      📊 Plan ID: 4b96e706 | Cost:  25.00 | Time:  38 ms
+      📊 Plan ID: 4b96e706 | Time:  38 ms
       🔍 Normalized: select * from users where id = ?
 
   Q2: SELECT * FROM users WHERE id = 2
       Pattern: Users by ID (Pattern 1 - same)
 
       ✅ CACHE HIT - Reused plan (Accessed 1 times)
-      📊 Plan ID: 4b96e706 | Cost:  25.00 | Time:   1 ms
+      📊 Plan ID: 4b96e706 | Time:   1 ms
       🔍 Normalized: select * from users where id = ?
 ```
 
