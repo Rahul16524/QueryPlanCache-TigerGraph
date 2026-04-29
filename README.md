@@ -124,6 +124,7 @@ src/main/java/com/querycache/
 | **SQLiteParser.java** | `parser/` | ⚙️ ANTLR-generated parser (builds AST from tokens) |
 | **SQLiteLexer.java** | `parser/` | 🔠 ANTLR-generated lexer (tokenizes SQL string) |
 | **SQLite.g4** | `resources/` | 📜 ANTLR grammar source (lexer & parser rules) |
+---
 
 ## 🔧 Technologies & Tools Used
 
