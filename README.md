@@ -112,18 +112,18 @@ src/main/java/com/querycache/
 
 | File | Path | Purpose |
 |------|------|---------|
-| **QueryPlanCacheTest.java** | `test/` | ✅ Comprehensive test suite with 17 queries, pattern matching, and validation |
-| **QueryService.java** | `service/` | 🎮 Orchestrator - Executes queries, checks cache, generates plans, tracks metrics |
-| **QueryPlanCache.java** | `cache/` | 💾 In-memory cache with LRU eviction and schema version tracking |
-| **QueryPlan.java** | `model/` | 📦 Domain entity containing plan ID, normalized query, cost, access stats |
-| **CacheMetrics.java** | `metrics/` | 📊 Telemetry collector for hit ratio, execution times |
-| **SQLiteParserService.java** | `parser/` | 🔄 Wrapper for ANTLR - tokenization, parsing, normalization |
-| **QueryVisitor.java** | `parser/` | ✨ Core normalizer - Replaces literals (numbers, strings) with '?' |
-| **SQLiteBaseVisitor.java** | `parser/` | 📚 ANTLR-generated abstract visitor (extends AbstractParseTreeVisitor) |
-| **SQLiteVisitor.java** | `parser/` | 🎯 ANTLR-generated visitor interface (80+ visit methods) |
-| **SQLiteParser.java** | `parser/` | ⚙️ ANTLR-generated parser (builds AST from tokens) |
-| **SQLiteLexer.java** | `parser/` | 🔠 ANTLR-generated lexer (tokenizes SQL string) |
-| **SQLite.g4** | `resources/` | 📜 ANTLR grammar source (lexer & parser rules) |
+| **QueryPlanCacheTest.java** | `test/` |  Comprehensive test suite with 17 queries, pattern matching, and validation |
+| **QueryService.java** | `service/` |  Orchestrator - Executes queries, checks cache, generates plans, tracks metrics |
+| **QueryPlanCache.java** | `cache/` |  In-memory cache with LRU eviction and schema version tracking |
+| **QueryPlan.java** | `model/` |  Domain entity containing plan ID, normalized query, cost, access stats |
+| **CacheMetrics.java** | `metrics/` |  Telemetry collector for hit ratio, execution times |
+| **SQLiteParserService.java** | `parser/` |  Wrapper for ANTLR - tokenization, parsing, normalization |
+| **QueryVisitor.java** | `parser/` |  Core normalizer - Replaces literals (numbers, strings) with '?' |
+| **SQLiteBaseVisitor.java** | `parser/` |  ANTLR-generated abstract visitor (extends AbstractParseTreeVisitor) |
+| **SQLiteVisitor.java** | `parser/` |  ANTLR-generated visitor interface (80+ visit methods) |
+| **SQLiteParser.java** | `parser/` |  ANTLR-generated parser (builds AST from tokens) |
+| **SQLiteLexer.java** | `parser/` |  ANTLR-generated lexer (tokenizes SQL string) |
+| **SQLite.g4** | `resources/` |  ANTLR grammar source (lexer & parser rules) |
 ---
 
 ## 🔧 Technologies & Tools Used
