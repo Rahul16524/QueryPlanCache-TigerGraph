@@ -144,6 +144,10 @@ src/main/java/com/querycache/
 ### Prerequisites
 **1. Docker Desktop** (Required for containerization)
 
+Open Command Prompt (if not already open)
+
+Press Win + R, type cmd, and press Enter
+
 Check if Docker is installed:
 ```
 docker --version
