@@ -149,8 +149,10 @@ https://www.docker.com/products/docker-desktop
 ```
 
 ### Verify Docker Installation
-- Open **Command Prompt** and run:
+**Step 1:** Open Command Prompt
+- Press `Win + R`, type `cmd`, and press `Enter`
 
+**Step 2:** Verify Docker is installed
 ```
 docker --version
 ```
@@ -158,25 +160,32 @@ Expected Output:
 ```
 Docker version 24.0.7, build afdd53b
 ```
+(or any version 20.10+)
+
 
 ## 🚀 Run the Project 
 
-Step 1: Clone the repository
+**Step 1:** Open Command Prompt (if not already open)
+
+Press Win + R, type cmd, and press Enter
+
+
+**Step 2:** Clone the repository
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git
 ```
 
-Step 2: Enter the project directory
+**Step 3:** Enter the project directory
 ```
 cd QueryPlanCache-TigerGraph
 ```
 
-Step 3: Build the Docker image
+**Step 4:** Build the Docker image
 ```
 docker build -t queryplancache .
 ```
 
-Step 4: Run the test suite
+**Step 5:** Run the test suite
 ```
 docker run --rm queryplancache
 ```
