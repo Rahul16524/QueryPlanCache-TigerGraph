@@ -140,13 +140,14 @@ src/main/java/com/querycache/
 
 
 ## 🐳 Quick Start with Docker (Easiest Way)
+**Open Command Prompt** (if not already open)
+
+Press Win + R, type cmd, and press Enter
 
 ### Prerequisites
 **1. Docker Desktop** (Required for containerization)
 
-Open Command Prompt (if not already open)
 
-Press Win + R, type cmd, and press Enter
 
 Check if Docker is installed:
 ```
