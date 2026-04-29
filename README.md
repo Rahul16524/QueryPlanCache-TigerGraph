@@ -142,25 +142,34 @@ src/main/java/com/querycache/
 ## 🐳 Quick Start with Docker (Easiest Way)
 
 ### Prerequisites
-- **Docker Desktop** installed (if not, download from below link)
+**1. Docker Desktop** (Required for containerization)
 
-```
-https://www.docker.com/products/docker-desktop
-```
-
-### Verify Docker Installation
-**Step 1:** Open Command Prompt
-- Press `Win + R`, type `cmd`, and press `Enter`
-
-**Step 2:** Verify Docker is installed
+Check if Docker is installed:
 ```
 docker --version
 ```
-Expected Output:
+
+If not installed (shows error), download from:
 ```
-Docker version 24.0.7, build afdd53b
+https://www.docker.com/products/docker-desktop
 ```
-(or any version 20.10+)
+After installation, restart your computer
+
+
+2. Git (Required for cloning the repository)
+
+Check if Git is installed:
+
+```
+git --version
+```
+
+If not installed (shows error), download from:
+```
+https://git-scm.com/downloads
+```
+During installation, select: "Git from the command line and also from 3rd-party software"
+
 
 
 ## 🚀 Run the Project 
