@@ -465,31 +465,9 @@ Why immediate eviction on invalid:
     
     Avoids repeated validation failures for same query
 ---
-### 7. Cost Estimation Heuristics
-Goal: Provide realistic cost estimates without actual database statistics.
 
-Approach - Operation-Based Weighting:
-
-SQL Feature	Cost Addition	Rationale
-Base cost	10.0	Minimum query overhead
-WHERE clause	+5.0	Filter operation
-ORDER BY	+8.0	Sorting overhead
-GROUP BY	+15.0	Aggregation overhead
-JOIN	+25.0	Multiple table access
-Subquery	+30.0	Nested execution
-DISTINCT    +12.0    for distinct
-orders table	+20.0	Large table assumption
-products table	+15.0	Medium table assumption
-users table	+10.0	Small table assumption
-
-Example Calculation:
-```
-SELECT * FROM orders o JOIN users u ON o.user_id = u.id WHERE o.total > 1000
-```
-
-Cost = 10 (base) + 25 (JOIN) + 5 (WHERE) + 20 (orders table) + 10 (users table) = 70.0
 ---
-### 8. Table Extraction Method
+### 7. Table Extraction Method
 Goal: Identify which tables a query accesses for invalidation.
 
 Approach - Pattern Matching over AST Traversal:
@@ -513,29 +491,9 @@ private void extractTables(String query, QueryPlan plan) {
     if (lowerQuery.contains("customers")) plan.addTableAccessed("customers");
 }
 ```
+
 ---
-### 9. Plan Generation Simulation
-Goal: Simulate realistic plan generation costs without actual database.
-
-Approach - Randomized Delay:
-
-```
-private static final int PLAN_GEN_BASE_TIME = 45;  // 45ms base 
-
-// Simulate plan generation (10-45ms range)
-Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 35));
-// Range: 45ms to 65ms
-```
-
-Why this range:
-
-    45ms represents minimum parsing + optimization time
-    
-    Random variance simulates query complexity differences
-    
-    Matches real database behavior (PostgreSQL: 30-80ms for complex queries)
----
-### 10. Metrics Collection
+### 8. Metrics Collection
 Goal: Track cache effectiveness for performance analysis.
 
 Metrics Tracked:
