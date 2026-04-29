@@ -186,18 +186,18 @@ Copy and paste this entire command:
 ```
 git clone https://github.com/Rahul16524/QueryPlanCache-TigerGraph.git && cd QueryPlanCache-TigerGraph && docker build -t queryplancache . && docker run --rm queryplancache
 ```
-```
+
 ## What Docker Does Automatically
 
-    Sets up Java 21 environment
+- Sets up Java 21 environment
 
-    Downloads and configures ANTLR 4.13.2 parser
+- Downloads and configures ANTLR 4.13.2 parser
 
-    Compiles all Java source files
+- Compiles all Java source files
 
-    Runs the complete test suite with 17 test queries
+- Runs the complete test suite with 17 test queries
 
-    Cleans up container after completion (--rm flag)
+- Cleans up container after completion (--rm flag)
 
 
 
