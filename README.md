@@ -95,8 +95,7 @@ flowchart TB
 ```
 
 ### 📁 Project Structure Tree
-
-### 📁 Project Structure Tree
+```
 src/main/java/com/querycache/
 │
 ├── app/
@@ -133,12 +132,12 @@ Generated Artifacts (ANTLR):
 ├── SQLiteLexer.interp # 📖 Lexer interpretation data
 ├── SQLite.tokens # 🏷️ Parser token definitions
 └── SQLite.interp # 📖 Parser interpretation data
+```
 
 ### 📋 File Purpose Summary
 
 | File | Path | Purpose |
 |------|------|---------|
-| **Main.java** | `app/` | 🚀 Demo application showing 3 scenarios: NO cache, WITH cache, Schema change invalidation |
 | **QueryPlanCacheTest.java** | `test/` | ✅ Comprehensive test suite with 17 queries, pattern matching, and validation |
 | **QueryService.java** | `service/` | 🎮 Orchestrator - Executes queries, checks cache, generates plans, tracks metrics |
 | **QueryPlanCache.java** | `cache/` | 💾 In-memory cache with LRU eviction and schema version tracking |
