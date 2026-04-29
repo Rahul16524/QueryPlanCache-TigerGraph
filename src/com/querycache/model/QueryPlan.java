@@ -31,9 +31,6 @@ public class QueryPlan {
     /** Time taken to generate this plan (milliseconds) */
     private final long generationTime;
     
-    /** Estimated execution cost (higher = more expensive) */
-    private final double estimatedCost;
-    
     /** Schema version when this plan was created (for invalidation) */
     private int schemaVersion;
     
@@ -56,11 +53,10 @@ public class QueryPlan {
      * @param generationTime Time taken to generate (ms)
      * @param estimatedCost Estimated execution cost
      */
-    public QueryPlan(String planId, String normalizedQuery, long generationTime, double estimatedCost) {
+    public QueryPlan(String planId, String normalizedQuery) {
         this.planId = planId;
         this.normalizedQuery = normalizedQuery;
-        this.generationTime = generationTime;
-        this.estimatedCost = estimatedCost;
+        this.generationTime = System.currentTimeMillis();
         this.tablesAccessed = new ArrayList<>();
         this.accessCount = 0;
         this.schemaVersion = 0;
@@ -84,14 +80,13 @@ public class QueryPlan {
         return generationTime;
     }
     
-    /** Returns estimated execution cost */
-    public double getEstimatedCost() {
-        return estimatedCost;
-    }
-    
     /** Returns schema version for cache validation */
     public int getSchemaVersion() {
         return schemaVersion;
+    }
+
+    public void setSchemaVersion(int schemaVersion) {
+        this.schemaVersion = schemaVersion;
     }
     
     /** Returns list of tables accessed by this query */
@@ -110,11 +105,6 @@ public class QueryPlan {
     }
     
     // ========== SETTERS ==========
-    
-    /** Sets schema version (called when storing in cache) */
-    public void setSchemaVersion(int schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
     
     /** Adds a table to the accessed tables list (no duplicates) */
     public void addTableAccessed(String table) {
@@ -141,7 +131,7 @@ public class QueryPlan {
      */
     @Override
     public String toString() {
-        return String.format("QueryPlan{id='%s', tables=%s, cost=%.2f, version=%d, accesses=%d, lastExec=%dms}",
-                            planId, tablesAccessed, estimatedCost, schemaVersion, accessCount, lastExecutionTime);
+        return String.format("QueryPlan{id='%s', tables=%s, version=%d, accesses=%d, lastExec=%dms}",
+                            planId, tablesAccessed, schemaVersion, accessCount, lastExecutionTime);
     }
 }

@@ -121,7 +121,7 @@ public class QueryPlanCacheTest {
         System.out.println("\n📌 SCENARIO 1: WITHOUT CACHE (Baseline)\n");
         printSeparator();
         System.out.println("\n⚙️ Mode: Cache DISABLED");
-        System.out.println("📝 Behavior: Generate execution plan for EVERY query\n");
+        System.out.println("   Behavior: Generate execution plan for EVERY query\n");
         printSeparator();
         
         QueryService service = new QueryService();
@@ -138,15 +138,15 @@ public class QueryPlanCacheTest {
             
             executions.add(new QueryExecution(i+1, TEST_QUERIES[i], QUERY_PATTERNS[i], 
                                              false, queryTime, plan.getPlanId(), 
-                                             plan.getEstimatedCost(), plan.getNormalizedQuery()));
+                                              plan.getNormalizedQuery()));
             
             System.out.printf("\n  Q%d: %s%n", (i+1), TEST_QUERIES[i]);
             System.out.printf("      Pattern: %s%n", QUERY_PATTERNS[i]);
             System.out.println();
             System.out.printf("      🔄 Generated new plan (cache disabled)%n");
-            System.out.printf("      📊 Plan ID: %-8s | Cost: %6.2f | Time: %3d ms%n", 
-                    plan.getPlanId().substring(0, 8), plan.getEstimatedCost(), queryTime);
-            System.out.printf("      🔍 Normalized: %s%n", plan.getNormalizedQuery());
+            System.out.printf("         Plan ID: %-8s | Time: %3d ms%n", 
+                    plan.getPlanId().substring(0, 8),  queryTime);
+            System.out.printf("         Normalized: %s%n", plan.getNormalizedQuery());
         }
         
         long totalTime = System.currentTimeMillis() - startTime;
@@ -172,7 +172,7 @@ public class QueryPlanCacheTest {
         System.out.println("\n📌 SCENARIO 2: WITH CACHE (Normal Operation)\n");
         printSeparator();
         System.out.println("\n⚙️ Mode: Cache ENABLED");
-        System.out.println("📝 Behavior: Reuse cached plans for identical patterns\n");
+        System.out.println("    Behavior: Reuse cached plans for identical patterns\n");
         printSeparator();
         
         QueryService service = new QueryService();
@@ -194,7 +194,7 @@ public class QueryPlanCacheTest {
             
             executions.add(new QueryExecution(i+1, TEST_QUERIES[i], QUERY_PATTERNS[i], 
                                              isHit, queryTime, plan.getPlanId(), 
-                                             plan.getEstimatedCost(), plan.getNormalizedQuery()));
+                                              plan.getNormalizedQuery()));
             
             System.out.printf("\n  Q%d: %s%n", (i+1), TEST_QUERIES[i]);
             System.out.printf("      Pattern: %s%n", QUERY_PATTERNS[i]);
@@ -204,9 +204,9 @@ public class QueryPlanCacheTest {
             } else {
                 System.out.printf("      ❌ CACHE MISS - Generated new plan%n");
             }
-            System.out.printf("      📊 Plan ID: %-8s | Cost: %6.2f | Time: %3d ms%n", 
-                    plan.getPlanId().substring(0, 8), plan.getEstimatedCost(), queryTime);
-            System.out.printf("      🔍 Normalized: %s%n", plan.getNormalizedQuery());
+            System.out.printf("         Plan ID: %-8s | Time: %3d ms%n", 
+                    plan.getPlanId().substring(0, 8), queryTime);
+            System.out.printf("         Normalized: %s%n", plan.getNormalizedQuery());
         }
         
         long totalTime = System.currentTimeMillis() - startTime;
@@ -220,7 +220,7 @@ public class QueryPlanCacheTest {
                           (misses * 100.0 / TEST_QUERIES.length));
         System.out.printf("  • Avg Time/Query: %.2f ms%n", (double)totalTime / TEST_QUERIES.length);
         
-        System.out.println("\n  📦 Cache Contents:");
+        System.out.println("\n   Cache Contents:");
         var cache = service.getCache();
         System.out.printf("    • Total cached plans: %d%n", cache.getSize());
         printSeparator();
@@ -240,7 +240,7 @@ public class QueryPlanCacheTest {
      System.out.println("\n📌 SCENARIO 3: SCHEMA CHANGE (Cache Invalidation)\n");
      printSeparator();
      System.out.println("\n⚙️ Mode: Cache ENABLED + Schema Change");
-     System.out.println("📝 Behavior: Cache invalidated when schema changes\n");
+     System.out.println("   Behavior: Cache invalidated when schema changes\n");
      printSeparator();
      
      QueryService service = new QueryService();
@@ -268,13 +268,13 @@ public class QueryPlanCacheTest {
      boolean isHit1 = service.getLastAccessWasHit();
      System.out.printf("    Query: %s%n", testQuery);
      if (isHit1) {
-         System.out.printf("      -> ✅ HIT (Unexpected - cache should be empty!) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ✅ HIT (Unexpected - cache should be empty!) | Plan: %s | Time: %d ms%n", 
                           plan1.getPlanId().substring(0, 8), time1);
      } else {
-         System.out.printf("      -> ❌ MISS (Plan generated as expected) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ❌ MISS (Plan generated as expected) | Plan: %s | Time: %d ms%n", 
                           plan1.getPlanId().substring(0, 8), time1);
      }
-     System.out.printf("      🔍 Normalized: %s%n\n", plan1.getNormalizedQuery());
+     System.out.printf("             Normalized: %s%n\n", plan1.getNormalizedQuery());
      
      
      
@@ -291,14 +291,14 @@ public class QueryPlanCacheTest {
      if (isHit2) {
          hitsBeforeSchemaChange = 1;
          System.out.printf("    Query: %s%n", testQuery);
-         System.out.printf("      -> ✅ HIT (Cached plan reused correctly) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ✅ HIT (Cached plan reused correctly) | Plan: %s | Time: %d ms%n", 
                           plan2.getPlanId().substring(0, 8), time2);
      } else {
          System.out.printf("    Query: %s%n", testQuery);
-         System.out.printf("      -> ❌ MISS (ERROR - Should have been a cache hit!) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ❌ MISS (ERROR - Should have been a cache hit!) | Plan: %s | Time: %d ms%n", 
                           plan2.getPlanId().substring(0, 8), time2);
      }
-     System.out.printf("      🔍 Normalized: %s%n\n", plan2.getNormalizedQuery());
+     System.out.printf("             Normalized: %s%n\n", plan2.getNormalizedQuery());
      
      // Verify plan1 and plan2 have same ID (cache reuse)
      boolean samePlanBefore = plan1.getPlanId().equals(plan2.getPlanId());
@@ -321,7 +321,7 @@ public class QueryPlanCacheTest {
      long invalidateTime = (System.nanoTime() - invalidateStart) / 1_000_000;
      
      System.out.printf("  ⚡ Cache invalidated in %d ms%n", invalidateTime);
-     System.out.printf("  📦 Cache size after invalidation: %d%n\n", service.getCache().getSize());
+     System.out.printf("     Cache size after invalidation: %d%n\n", service.getCache().getSize());
      
      // Verify cache was actually cleared
      boolean cacheCleared = (service.getCache().getSize() == 0);
@@ -347,13 +347,13 @@ public class QueryPlanCacheTest {
      boolean isHit3 = service.getLastAccessWasHit();
      System.out.printf("    Query: %s%n", testQuery);
      if (isHit3) {
-         System.out.printf("      -> ✅ HIT (ERROR - Should have been a miss after invalidation!) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ✅ HIT (ERROR - Should have been a miss after invalidation!) | Plan: %s | Time: %d ms%n", 
                           plan3.getPlanId().substring(0, 8), time3);
      } else {
-         System.out.printf("      -> ❌ MISS (Correct - regenerated with new schema) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ❌ MISS (Correct - regenerated with new schema) | Plan: %s | Time: %d ms%n", 
                           plan3.getPlanId().substring(0, 8), time3);
      }
-     System.out.printf("      🔍 Normalized: %s%n\n", plan3.getNormalizedQuery());
+     System.out.printf("             Normalized: %s%n\n", plan3.getNormalizedQuery());
      
      // Check if plan regenerated with NEW ID (different from before)
      boolean planRegenerated = !plan1.getPlanId().equals(plan3.getPlanId());
@@ -382,14 +382,14 @@ public class QueryPlanCacheTest {
      if (isHit4) {
          hitsAfterSchemaChange = 1;
          System.out.printf("    Query: %s%n", testQuery);
-         System.out.printf("      -> ✅ HIT (New cached plan reused correctly) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ✅ HIT (New cached plan reused correctly) | Plan: %s | Time: %d ms%n", 
                           plan4.getPlanId().substring(0, 8), time4);
      } else {
          System.out.printf("    Query: %s%n", testQuery);
-         System.out.printf("      -> ❌ MISS (ERROR - Should have been a cache hit after rebuild!) | Plan: %s | Time: %d ms%n", 
+         System.out.printf("       -> ❌ MISS (ERROR - Should have been a cache hit after rebuild!) | Plan: %s | Time: %d ms%n", 
                           plan4.getPlanId().substring(0, 8), time4);
      }
-     System.out.printf("      🔍 Normalized: %s%n\n", plan4.getNormalizedQuery());
+     System.out.printf("             Normalized: %s%n\n", plan4.getNormalizedQuery());
      
      // Verify plan3 and plan4 have same ID (cache reuse after rebuild)
      boolean samePlanAfter = plan3.getPlanId().equals(plan4.getPlanId());
@@ -585,18 +585,16 @@ public class QueryPlanCacheTest {
         boolean isHit;
         long executionTime;     // Time in milliseconds
         String planId;
-        double cost;
         String normalizedQuery;
         
         QueryExecution(int queryNum, String query, String pattern, boolean isHit, 
-                      long executionTime, String planId, double cost, String normalizedQuery) {
+                      long executionTime, String planId, String normalizedQuery) {
             this.queryNum = queryNum;
             this.query = query;
             this.pattern = pattern;
             this.isHit = isHit;
             this.executionTime = executionTime;
             this.planId = planId;
-            this.cost = cost;
             this.normalizedQuery = normalizedQuery;
         }
     }

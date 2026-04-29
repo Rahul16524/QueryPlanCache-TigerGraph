@@ -81,8 +81,7 @@ public class QueryService {
         }
         
         String planId = UUID.randomUUID().toString();
-        double estimatedCost = calculateEstimatedCost(query);
-        plan = new QueryPlan(planId, normalizedQuery, 0, estimatedCost); 
+        plan = new QueryPlan(planId, normalizedQuery); 
         
         extractTables(query, plan);
         cache.put(normalizedQuery, plan);
@@ -94,22 +93,6 @@ public class QueryService {
         return plan;
     }
     
-    private double calculateEstimatedCost(String query) {
-        double cost = 10.0;
-        String lowerQuery = query.toLowerCase();
-        
-        if (lowerQuery.contains("where")) cost += 5.0;
-        if (lowerQuery.contains("join")) cost += 25.0;
-        if (lowerQuery.contains("order by")) cost += 8.0;
-        if (lowerQuery.contains("group by")) cost += 15.0;
-        if (lowerQuery.contains("subquery")) cost += 30.0;
-        if (lowerQuery.contains("distinct")) cost += 12.0;
-        if (lowerQuery.contains("orders")) cost += 20.0;
-        if (lowerQuery.contains("products")) cost += 15.0;
-        if (lowerQuery.contains("users")) cost += 10.0;
-        
-        return Math.round(cost * 100.0) / 100.0;
-    }
     
     private void extractTables(String query, QueryPlan plan) {
         String lowerQuery = query.toLowerCase();
