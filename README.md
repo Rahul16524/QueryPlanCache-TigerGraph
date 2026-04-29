@@ -531,42 +531,79 @@ Storage	ConcurrentHashMap	synchronized HashMap	Better concurrency
 
 SQL Query: SELECT * FROM users WHERE id = 101
 │
-│  [File: QueryProcessor.java, Line: 156]
-│  [Method: QueryProcessor.executeQuery(String sql)]
+│  [File: QueryService.java, Line: 48]
+│  [Method: QueryService.execute(String query)]
 │
 ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 1. NORMALIZE PHASE                                                                               │
+│ 1. VALIDATE PHASE                                                                               │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  File: SqlNormalizer.java                    Method: normalize(String sql)                      │
-│  • Parse SQL using ANTLR4 parser                                                                 │
-│  • Visitor pattern walks AST: SqlNormalizerVisitor.visitLiteral()                               │
-│  • Replace literals with '?' placeholders                                                        │
-│  • Convert to lowercase: SqlNormalizerVisitor.visitIdentifier()                                  │
-│  • Remove extra whitespace: SqlNormalizerVisitor.visitWhitespace()                               │
-│  • Output: "select * from users where id = ?"                                                    │
-│  • Return: NormalizedQuery object with normalizedSql + metadata                                  │
+│  File: SQLiteParserService.java              Method: validateQuery(String sql)                 │
+│  • Check SQL syntax using ANTLR parser                                                          │
+│  • If invalid → throw IllegalArgumentException                                                   │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 │
 ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 2. CACHE LOOKUP PHASE                                                                           │
+│ 2. NORMALIZE PHASE                                                                               │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  File: QueryPlanCache.java                     Method: getPlan(String normalizedSql)           │
+│  File: SQLiteParserService.java              Method: normalizeQuery(String sql)                │
 │                                                                                                  │
 │  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │  Cache Structure: ConcurrentHashMap<String, CachedPlanEntry>                           │    │
-│  │  • Key: normalizedSql (e.g., "select * from users where id = ?")                       │    │
-│  │  • Value: CachedPlanEntry { executionPlan, cost, timestamp, schemaVersion, hits }      │    │
+│  │  STEP A: LEXER (Tokenization)                                                          │    │
+│  │  SQLiteLexer = new SQLiteLexer(CharStreams.fromString(query))                          │    │
+│  │  • Converts SQL string into tokens (keywords, identifiers, literals)                   │    │
+│  │  • Example: ["SELECT", "*", "FROM", "users", "WHERE", "id", "=", "101"]                │    │
 │  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                                  │
-│  // No explicit locks - ConcurrentHashMap provides thread-safe operations                       │
-│   cacheMap.get(normalizedSql)  // Thread-safe internally                                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  STEP B: PARSER (Build AST)                                                             │    │
+│  │  SQLiteParser = new SQLiteParser(tokens)                                                │    │
+│  │  ParseTree tree = parser.parse()                                                        │    │
+│  │  • Builds Abstract Syntax Tree from tokens                                              │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  STEP C: VISITOR (Transform AST)                                                        │    │
+│  │  QueryVisitor visitor = new QueryVisitor()                                              │    │
+│  │  String normalized = visitor.visit(tree)                                               │    │
+│  │                                                                                         │    │
+│  │  Key Methods in QueryVisitor:                                                           │    │
+│  │  • visitLiteral_value() → returns "?"  (replaces numbers/strings)                      │    │
+│  │  • visitExpr() → preserves operators (>, <, =, AND, OR)                                 │    │
+│  │  • visitSelect_core() → handles SELECT, FROM, WHERE clauses                             │    │
+│  │                                                                                         │    │
+│  │  Output: "select * from users where id = ?"                                            │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 3. CACHE LOOKUP PHASE                                                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  File: QueryPlanCache.java                     Method: get(String normalizedSql)               │
+│                                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  Cache Structure: ConcurrentHashMap<String, QueryPlan>                                  │    │
+│  │  • Key: normalizedSql (e.g., "select * from users where id = ?")                       │    │
+│  │  • Value: QueryPlan { planId, normalizedQuery, tablesAccessed, schemaVersion }         │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                  │
+│  // If cache is disabled, return null immediately                                              │
+│  if (!enabled) return null;                                                                     │
+│                                                                                                  │
+│  // Thread-safe lookup - ConcurrentHashMap handles internal locking                             │
+│  QueryPlan plan = cache.get(normalizedSql);                                                     │
+│                                                                                                  │
+│  // Update LRU timestamp if found                                                               │
+│  if (plan != null) {                                                                            │
+│      accessTimestamps.put(key, System.currentTimeMillis());                                    │
+│  }                                                                                              │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 │
 │                              ┌───────────────────────────────────────┐
 │                              │         DECISION BRANCH               │
-│                              │  cacheResult != null ?                │
+│                              │  plan != null && isValid() ?          │
 │                              └───────────────┬───────────────────────┘
 │                                              │
 │              ┌───────────────────────────────┴───────────────────────────────┐
@@ -574,110 +611,116 @@ SQL Query: SELECT * FROM users WHERE id = 101
 │              ▼                                                               ▼
 │    ┌─────────────────────────┐                                 ┌─────────────────────────────┐
 │    │      CACHE HIT          │                                 │        CACHE MISS           │
-│    │  (Plan exists in cache) │                                 │   (Plan not found)          │
+│    │  (Plan exists & valid)  │                                 │   (Plan not found)          │
 │    └────────────┬────────────┘                                 └──────────────┬──────────────┘
 │                 │                                                             │
-│                 │                                    ┌────────────────────────▼────────────────────────┐
-│                 │                                    │ 3. PLAN GENERATION PHASE                        │
-│                 │                                    ├─────────────────────────────────────────────────┤
-│                 │                                    │ File: ExecutionPlanGenerator.java              │
-│                 │                                    │ Method: generatePlan(NormalizedQuery query)    │
-│                 │                                    │                                                 │
-│                 │                                    │ Steps:                                         │
-│                 │                                    │ ┌─────────────────────────────────────────────┐ │
-│                 │                                    │ │ a) PlanId = UUID.randomUUID().toString()    │ │
-│                 │                                    │ │    File: ExecutionPlan.java, Line: 89       │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ b) Analyze tables:                          │ │
-│                 │                                    │ │    TableExtractor.extractTables(query)      │ │
-│                 │                                    │ │    File: TableExtractor.java, Line: 45      │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ c) Choose access method:                    │ │
-│                 │                                    │ │    - Primary key lookup?                    │ │
-│                 │                                    │ │    - Index scan?                            │ │
-│                 │                                    │ │    - Full table scan?                       │ │
-│                 │                                    │ │    File: AccessPathSelector.java, Line: 67  │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ d) Thread.sleep(10-45ms) [SIMULATE WORK]    │ │
-│                 │                                    │ │    File: ExecutionPlanGenerator.java, L:201 │ │
-│                 │                                    │ └─────────────────────────────────────────────┘ │
-│                 │                                    └────────────────────────┬────────────────────────┘
-│                 │                                                             │
-│                 │                                    ┌────────────────────────▼────────────────────────┐
-│                 │                                    │ 4. STORE IN CACHE PHASE                         │
-│                 │                                    ├─────────────────────────────────────────────────┤
-│                 │                                    │ File: QueryPlanCache.java                       │
-│                 │                                    │ Method: storePlan(key, plan)                    │
-│                 │                                    │                                                 │
-│                 │                                    │ Steps:                                         │
-│                 │                                    │ ┌─────────────────────────────────────────────┐ │
-│                 │                                    │ │ a) Check current cache size:                │ │
-│                 │                                    │ │    if (cacheMap.size() >= MAX_SIZE) {       │ │
-│                 │                                    │ │        evictEntry()                         │ │
-│                 │                                    │ │        File: EvictionPolicy.java, L:34      │ │
-│                 │                                    │ │        - LRU eviction: remove oldest hit    │ │
-│                 │                                    │ │    }                                       │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ b) Create CachedPlanEntry:                  │ │
-│                 │                                    │ │    new CachedPlanEntry(                     │ │
-│                 │                                    │ │        plan,                               │ │
-│                 │                                    │ │        System.currentTimeMillis(),          │ │
-│                 │                                    │ │        getCurrentSchemaVersion(),           │ │
-│                 │                                    │ │        0  // initial hits                  │ │
-│                 │                                    │ │    )                                       │ │
-│                 │                                    │ │    File: CachedPlanEntry.java, Line: 22     │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ c) Store in concurrent map:                 │ │
-│                 │                                    │ │    cacheMap.put(key, entry)                │ │
-│                 │                                    │ │    File: QueryPlanCache.java, Line: 156     │ │
-│                 │                                    │ │                                                 │ │
-│                 │                                    │ │ d) Log cache metrics:                       │ │
-│                 │                                    │ │    CacheMetrics.recordMiss(key)             │ │
-│                 │                                    │ │    File: CacheMetrics.java, Line: 89        │ │
-│                 │                                    │ └─────────────────────────────────────────────┘ │
-│                 │                                    └────────────────────────┬────────────────────────┘
-│                 │                                                             │
-│                 └─────────────────────────────────────┬───────────────────────┘
-│                                                       │
-│                                                       ▼
+│                 │                                          ┌──────────────────▼──────────────────┐
+│                 │                                          │ 4. CACHE MISS HANDLING              │
+│                 │                                          ├─────────────────────────────────────┤
+│                 │                                          │ File: QueryService.java             │
+│                 │                                          │ Lines: 72-83                        │
+│                 │                                          │                                     │
+│                 │                                          │ // Clean up stale entry if exists   │
+│                 │                                          │ if (plan != null && !isValid()) {   │
+│                 │                                          │     cache.evict(normalizedQuery);   │
+│                 │                                          │ }                                   │
+│                 │                                          │                                     │
+│                 │                                          │ // SIMULATE PLAN GENERATION         │
+│                 │                                          │ Thread.sleep(45 + random(20) ms);   │
+│                 │                                          │                                     │
+│                 │                                          │ // CREATE NEW PLAN                  │
+│                 │                                          │ String planId = UUID.randomUUID();  │
+│                 │                                          │ plan = new QueryPlan(planId,        │
+│                 │                                          │                normalizedQuery);     │
+│                 │                                          │                                     │
+│                 │                                          │ // EXTRACT TABLES (pattern match)   │
+│                 │                                          │ extractTables(query, plan);         │
+│                 │                                          │                                     │
+│                 │                                          │ // STORE IN CACHE                   │
+│                 │                                          │ cache.put(normalizedQuery, plan);   │
+│                 │                                          └──────────────────┬──────────────────┘
+│                 │                                                            │
+│                 │                                          ┌──────────────────▼──────────────────┐
+│                 │                                          │ 5. STORE IN CACHE (Detailed)        │
+│                 │                                          ├─────────────────────────────────────┤
+│                 │                                          │ File: QueryPlanCache.java           │
+│                 │                                          │ Method: put(String key, QueryPlan)  │
+│                 │                                          │ Lines: 105-125                      │
+│                 │                                          │                                     │
+│                 │                                          │ // Check cache size                 │
+│                 │                                          │ if (cache.size() >= maxSize) {      │
+│                 │                                          │     evictLRU();  // Remove oldest   │
+│                 │                                          │ }                                   │
+│                 │                                          │                                     │
+│                 │                                          │ // Get current schema version       │
+│                 │                                          │ int version =                       │
+│                 │                                          │     getCurrentSchemaVersion(        │
+│                 │                                          │         plan.getTablesAccessed());  │
+│                 │                                          │                                     │
+│                 │                                          │ // Attach version to plan           │
+│                 │                                          │ plan.setSchemaVersion(version);     │
+│                 │                                          │                                     │
+│                 │                                          │ // Store in concurrent map          │
+│                 │                                          │ cache.put(key, plan);               │
+│                 │                                          │ accessTimestamps.put(key, now);     │
+│                 │                                          └──────────────────┬──────────────────┘
+│                 │                                                            │
+│                 │                                          ┌──────────────────▼──────────────────┐
+│                 │                                          │ 6. LRU EVICTION (if needed)         │
+│                 │                                          ├─────────────────────────────────────┤
+│                 │                                          │ File: QueryPlanCache.java           │
+│                 │                                          │ Method: evictLRU()                  │
+│                 │                                          │ Lines: 165-185                      │
+│                 │                                          │                                     │
+│                 │                                          │ // Find oldest timestamp            │
+│                 │                                          │ for (entry : accessTimestamps) {    │
+│                 │                                          │     if (timestamp < oldestTime)     │
+│                 │                                          │         oldestKey = entry.getKey(); │
+│                 │                                          │ }                                   │
+│                 │                                          │                                     │
+│                 │                                          │ // Remove from both maps            │
+│                 │                                          │ cache.remove(oldestKey);            │
+│                 │                                          │ accessTimestamps.remove(oldestKey); │
+│                 │                                          └─────────────────────────────────────┘
+│                 │                                                            │
+│                 └────────────────────────────────────┬───────────────────────┘
+│                                                      │
+│                                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 5. RETURN PLAN & EXECUTE                                                                         │
+│ 7. RECORD METRICS & RETURN                                                                      │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  File: QueryExecutor.java                        Method: execute(ExecutionPlan plan)            │
+│  File: QueryService.java                         Lines: 85-93                                   │
+│  File: CacheMetrics.java                         Methods: recordHit() / recordMiss()           │
 │                                                                                                  │
 │  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
-│  │  Execution Plan Returned:                                                               │    │
+│  │  // Calculate execution time                                                            │    │
+│  │  long executionTime = System.currentTimeMillis() - startTime;                           │    │
+│  │                                                                                         │    │
+│  │  // Record metrics                                                                      │    │
+│  │  if (wasHit) {                                                                          │    │
+│  │      metrics.recordHit(executionTime);                                                  │    │
+│  │      plan.incrementAccessCount();                                                       │    │
+│  │  } else {                                                                               │    │
+│  │      metrics.recordMiss(executionTime);                                                 │    │
+│  │  }                                                                                      │    │
+│  │                                                                                         │    │
+│  │  plan.setLastExecutionTime(executionTime);                                              │    │
+│  │  return plan;                                                                           │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  QueryPlan Returned:                                                                     │    │
 │  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  │    │
 │  │  │ {                                                                                 │  │    │
 │  │  │   "planId": "abc123-def456-789",                                                  │  │    │
-│  │  │   "type": "INDEX_SEEK",                                                           │  │    │
-│  │  │   "table": "users",                                                               │  │    │
-│  │  │   "index": "PRIMARY",                                                             │  │    │
-│  │  │   "key": "id",                                                                    │  │    │
-│  │  │   "estimatedCost": 1.2,                                                           │  │    │
-│  │  │   "estimatedRows": 1                                                              │  │    │
+│  │  │   "normalizedQuery": "select * from users where id = ?",                          │  │    │
+│  │  │   "tablesAccessed": ["users"],                                                    │  │    │
+│  │  │   "schemaVersion": 1,                                                             │  │    │
+│  │  │   "accessCount": 5,                                                               │  │    │
+│  │  │   "generationTime": 1735123456789                                                 │  │    │
 │  │  │ }                                                                                 │  │    │
 │  │  └───────────────────────────────────────────────────────────────────────────────────┘  │    │
-│  │                                                                                           │    │
-│  │  Performance Metrics:                                                                     │    │
-│  │  • Cache HIT:  1-3ms  (Plan found, skip generation)                                       │    │
-│  │  • Cache MISS: 45-85ms (Full generation + storage)                                        │    │
-│  │                                                                                           │    │
-│  │  Cache Hit Ratio: Current: 78.5%  |  Target: >85%                                         │    │
 │  └─────────────────────────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                     RESULT ROWS                                                  │
-│                                                                                                 │
-│  ┌─────┬──────────┬─────────────────────────┐                                                  │
-│  │ id  │ name     │ email                   │                                                  │
-│  ├─────┼──────────┼─────────────────────────┤                                                  │
-│  │ 101 │ John Doe │ john.doe@example.com    │                                                  │
-│  └─────┴──────────┴─────────────────────────┘                                                  │
-│                                                                                                 │
-│  [File: ResultSetFormatter.java, Line: 45] - Format results for display                         │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 ---
