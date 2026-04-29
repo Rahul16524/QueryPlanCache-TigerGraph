@@ -465,7 +465,7 @@ Why immediate eviction on invalid:
     
     Avoids repeated validation failures for same query
 ---
-### 9. Plan Generation Time Simulation
+### 7. Plan Generation Time Simulation
 
 **Goal:** Simulate realistic query planning cost without an actual database.
 
@@ -479,7 +479,7 @@ Thread.sleep(PLAN_GEN_BASE_TIME + (int)(Math.random() * 20));
 // Range: 45ms to 65ms
 ```
 ---
-### 7. Table Extraction Method
+### 8. Table Extraction Method
 Goal: Identify which tables a query accesses for invalidation.
 
 Approach - Pattern Matching over AST Traversal:
@@ -505,7 +505,7 @@ private void extractTables(String query, QueryPlan plan) {
 ```
 
 ---
-### 8. Metrics Collection
+### 9. Metrics Collection
 Goal: Track cache effectiveness for performance analysis.
 
 Metrics Tracked:
