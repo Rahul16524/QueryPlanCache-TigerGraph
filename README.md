@@ -264,6 +264,7 @@ The cache mechanism uses a multi-layered approach combining query normalization,
 **Example Transformation:**
 
 Original: SELECT * FROM users WHERE id = 101 AND status = 'ACTIVE'
+
 Normalized: select * from users where id = ? and status = ?
 
 
