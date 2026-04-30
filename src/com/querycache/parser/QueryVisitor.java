@@ -1,5 +1,8 @@
 package com.querycache.parser;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -9,9 +12,6 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
     
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     
-    /**
-     * Visit parse tree root
-     */
     @Override
     public String visitParse(SQLiteParser.ParseContext ctx) {
         String result = visitChildren(ctx);
@@ -22,35 +22,32 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return result;
     }
     
-    /**
-     * Visit select statement
-     */
     @Override
     public String visitSelect_stmt(SQLiteParser.Select_stmtContext ctx) {
         return visitChildren(ctx);
     }
     
-    /**
-     * Visit select core (main SELECT part) - FIXED
-     */
     @Override
     public String visitSelect_core(SQLiteParser.Select_coreContext ctx) {
         StringBuilder result = new StringBuilder();
         
-        // Add SELECT
         result.append("select ");
         
-        // Handle DISTINCT/ALL if present
         if (ctx.K_DISTINCT() != null) {
             result.append("distinct ");
         } else if (ctx.K_ALL() != null) {
             result.append("all ");
         }
         
-        // Handle result columns - FIXED: visit each column individually
+        // ===== SORT SELECT COLUMNS =====
+        List<String> columnList = new ArrayList<>();
         for (int i = 0; i < ctx.result_column().size(); i++) {
+            columnList.add(visit(ctx.result_column(i)));
+        }
+        Collections.sort(columnList);
+        for (int i = 0; i < columnList.size(); i++) {
             if (i > 0) result.append(", ");
-            result.append(visit(ctx.result_column(i)));  // This is fine - passing single context
+            result.append(columnList.get(i));
         }
         
         // Handle FROM clause
@@ -59,37 +56,47 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
             if (ctx.table_or_subquery() != null && ctx.table_or_subquery().size() > 0) {
                 for (int i = 0; i < ctx.table_or_subquery().size(); i++) {
                     if (i > 0) result.append(", ");
-                    result.append(visit(ctx.table_or_subquery(i)));  // Fine - single context
+                    result.append(visit(ctx.table_or_subquery(i)));
                 }
             } else if (ctx.join_clause() != null) {
-                result.append(visit(ctx.join_clause()));  // Fine - single context
+                result.append(visit(ctx.join_clause()));
             }
         }
         
         // Handle WHERE clause
         if (ctx.K_WHERE() != null && ctx.expr() != null && ctx.expr().size() > 0) {
             result.append(" where ");
-            result.append(visit(ctx.expr(0)));  // Use first expr for WHERE
+            
+            // Get the raw WHERE expression
+            String whereClause = visit(ctx.expr(0));
+            
+            // CRITICAL FIX: Sort ALL AND conditions in the entire WHERE clause
+            whereClause = sortAllAndConditions(whereClause);
+            
+            result.append(whereClause);
         }
         
-        // Handle GROUP BY - FIXED: visit each expr individually
+        // Handle GROUP BY
         if (ctx.K_GROUP() != null) {
             result.append(" group by ");
             int exprCount = ctx.expr().size();
             int havingIndex = -1;
             
-            // Check if there's a HAVING clause
             if (ctx.K_HAVING() != null) {
                 havingIndex = exprCount - 1;
                 exprCount = exprCount - 1;
             }
             
+            List<String> groupByList = new ArrayList<>();
             for (int i = 0; i < exprCount; i++) {
+                groupByList.add(visit(ctx.expr(i)));
+            }
+            Collections.sort(groupByList);
+            for (int i = 0; i < groupByList.size(); i++) {
                 if (i > 0) result.append(", ");
-                result.append(visit(ctx.expr(i)));
+                result.append(groupByList.get(i));
             }
             
-            // Handle HAVING
             if (havingIndex >= 0) {
                 result.append(" having ");
                 result.append(visit(ctx.expr(havingIndex)));
@@ -100,27 +107,51 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
     }
     
     /**
-     * Visit factored select statement
+     * CRITICAL FIX: Sort all AND-connected conditions in a WHERE clause
+     * This handles nested AND conditions recursively
      */
+    private String sortAllAndConditions(String expr) {
+        if (expr == null || expr.isEmpty()) {
+            return expr;
+        }
+        
+        // Check if this is an AND expression
+        if (expr.contains(" and ")) {
+            // Split by " and " (but be careful with parentheses)
+            String[] parts = expr.split("\\s+and\\s+");
+            
+            // Recursively sort each part (for nested ANDs)
+            List<String> sortedParts = new ArrayList<>();
+            for (String part : parts) {
+                // Recursively process nested AND conditions
+                String processed = sortAllAndConditions(part.trim());
+                sortedParts.add(processed);
+            }
+            
+            // Sort alphabetically
+            Collections.sort(sortedParts);
+            
+            // Join back with " and "
+            return String.join(" and ", sortedParts);
+        }
+        
+        // Not an AND expression, return as-is
+        return expr;
+    }
+    
     @Override
     public String visitFactored_select_stmt(SQLiteParser.Factored_select_stmtContext ctx) {
         return visitChildren(ctx);
     }
     
-    /**
-     * Visit result column (SELECT clause)
-     */
     @Override
     public String visitResult_column(SQLiteParser.Result_columnContext ctx) {
-        // Handle SELECT *
         if (ctx.STAR() != null) {
             return "*";
         }
-        // Handle table.*
         if (ctx.table_name() != null && ctx.STAR() != null) {
             return visit(ctx.table_name()) + ".*";
         }
-        // Handle expression with alias
         if (ctx.expr() != null) {
             String exprResult = visit(ctx.expr());
             if (ctx.column_alias() != null) {
@@ -131,9 +162,6 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return visitChildren(ctx);
     }
     
-    /**
-     * Visit table or subquery
-     */
     @Override
     public String visitTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) {
         if (ctx.table_name() != null) {
@@ -149,9 +177,6 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return visitChildren(ctx);
     }
     
-    /**
-     * Visit join clause
-     */
     @Override
     public String visitJoin_clause(SQLiteParser.Join_clauseContext ctx) {
         StringBuilder result = new StringBuilder();
@@ -169,9 +194,6 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return result.toString();
     }
     
-    /**
-     * Visit join operator
-     */
     @Override
     public String visitJoin_operator(SQLiteParser.Join_operatorContext ctx) {
         if (ctx.COMMA() != null) {
@@ -195,9 +217,6 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return result.toString();
     }
     
-    /**
-     * Visit join constraint
-     */
     @Override
     public String visitJoin_constraint(SQLiteParser.Join_constraintContext ctx) {
         if (ctx.K_ON() != null && ctx.expr() != null) {
@@ -205,9 +224,14 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         }
         if (ctx.K_USING() != null) {
             StringBuilder result = new StringBuilder("using (");
+            List<String> columnNames = new ArrayList<>();
             for (int i = 0; i < ctx.column_name().size(); i++) {
+                columnNames.add(visit(ctx.column_name(i)));
+            }
+            Collections.sort(columnNames);
+            for (int i = 0; i < columnNames.size(); i++) {
                 if (i > 0) result.append(", ");
-                result.append(visit(ctx.column_name(i)));
+                result.append(columnNames.get(i));
             }
             result.append(")");
             return result.toString();
@@ -215,28 +239,19 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return "";
     }
     
-    /**
-     * Visit table name
-     */
     @Override
     public String visitTable_name(SQLiteParser.Table_nameContext ctx) {
         return ctx.getText();
     }
     
-    /**
-     * Visit column name
-     */
     @Override
     public String visitColumn_name(SQLiteParser.Column_nameContext ctx) {
         return ctx.getText();
     }
     
-    /**
-     * Visit expression - KEY METHOD FOR LITERAL REPLACEMENT
-     */
     @Override
     public String visitExpr(SQLiteParser.ExprContext ctx) {
-        // Handle literal values (numbers, strings) - REPLACE WITH '?'
+        // Handle literal values
         if (ctx.literal_value() != null) {
             return "?";
         }
@@ -244,7 +259,7 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         // Handle bind parameters
         if (ctx.BIND_PARAMETER() != null) {
             return "?";
-        }		
+        }
         
         // Handle column names
         if (ctx.column_name() != null) {
@@ -256,7 +271,7 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
             return ctx.unary_operator().getText() + " " + visit(ctx.expr(0));
         }
         
-        // Handle binary operators (||, *, /, %, +, -, <<, >>, &, |, <, <=, >, >=, =, ==, !=, <>)
+        // Handle binary operators
         if (ctx.getChildCount() == 3) {
             ParseTree leftChild = ctx.getChild(0);
             ParseTree rightChild = ctx.getChild(2);
@@ -267,13 +282,16 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
             String right = (rightChild instanceof SQLiteParser.ExprContext) ? 
                           visit((SQLiteParser.ExprContext) rightChild) : rightChild.getText();
             
+            // For AND operator, we DON'T sort here - we'll sort at the WHERE clause level
+            if (operator.equalsIgnoreCase("and")) {
+                // Just return as-is, sorting happens in sortAllAndConditions
+                return left + " and " + right;
+            }
+            
             return left + " " + operator + " " + right;
         }
         
-        // Handle AND/OR
-        if (ctx.K_AND() != null) {
-            return visit(ctx.expr(0)) + " and " + visit(ctx.expr(1));
-        }
+        // Handle OR
         if (ctx.K_OR() != null) {
             return visit(ctx.expr(0)) + " or " + visit(ctx.expr(1));
         }
@@ -289,9 +307,14 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
             if (ctx.select_stmt() != null) {
                 result.append(visit(ctx.select_stmt()));
             } else if (ctx.expr().size() > 1) {
+                List<String> inList = new ArrayList<>();
                 for (int i = 1; i < ctx.expr().size(); i++) {
-                    if (i > 1) result.append(", ");
-                    result.append(visit(ctx.expr(i)));
+                    inList.add(visit(ctx.expr(i)));
+                }
+                Collections.sort(inList);
+                for (int i = 0; i < inList.size(); i++) {
+                    if (i > 0) result.append(", ");
+                    result.append(inList.get(i));
                 }
             }
             result.append(")");
@@ -355,7 +378,7 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
             return "(" + visit(ctx.expr(0)) + ")";
         }
         
-        // For everything else, process children
+        // Default: process children
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < ctx.getChildCount(); i++) {
             ParseTree child = ctx.getChild(i);
@@ -381,33 +404,21 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
         return result.toString();
     }
     
-    /**
-     * Visit literal value - ALWAYS replace with '?'
-     */
     @Override
     public String visitLiteral_value(SQLiteParser.Literal_valueContext ctx) {
         return "?";
     }
     
-    /**
-     * Visit column alias
-     */
     @Override
     public String visitColumn_alias(SQLiteParser.Column_aliasContext ctx) {
         return ctx.getText();
     }
     
-    /**
-     * Visit table alias
-     */
     @Override
     public String visitTable_alias(SQLiteParser.Table_aliasContext ctx) {
         return ctx.getText();
     }
     
-    /**
-     * Helper method to check if a string is an operator
-     */
     private boolean isOperator(String str) {
         return str.equals("=") || str.equals("==") || str.equals(">") || 
                str.equals("<") || str.equals(">=") || str.equals("<=") || 
@@ -418,17 +429,11 @@ public class QueryVisitor extends SQLiteBaseVisitor<String> {
                str.equals("and") || str.equals("or") || str.equals("not");
     }
     
-    /**
-     * Handle any node that's not explicitly overridden
-     */
     @Override
     protected String defaultResult() {
         return "";
     }
     
-    /**
-     * Aggregate results from child nodes
-     */
     @Override
     protected String aggregateResult(String aggregate, String nextResult) {
         if (aggregate == null) return nextResult;

@@ -24,54 +24,65 @@ public class QueryPlanCacheTest {
     private static int testsPassed = 0;
     private static int testsFailed = 0;
     
-    // TEST QUERIES - Designed to test different pattern types
-    // Note: q1-q4 are same pattern (WHERE id = X) with different values
-    // q5-q7 test different operators (>, <, =) on same column
-    // q8-q10 test string equality with different values
-    // q11-q12 test JOIN pattern with different thresholds
-    // q13-q14 test GROUP BY with HAVING clause
-    // q15 tests subquery pattern
-    // q16-q17 test ORDER BY with LIMIT
+ // Test queries covering various SQL patterns for pattern detection testing
     private static final String[] TEST_QUERIES = {
+        // Pattern A: Simple SELECT * with equality on numeric ID
         "SELECT * FROM users WHERE id = 1",
         "SELECT * FROM users WHERE id = 2",
-        "SELECT * FROM users WHERE id = 3",
-        "SELECT * FROM users WHERE id = 4",
-        "SELECT * FROM products WHERE price > 100",
-        "SELECT * FROM products WHERE price < 50",
-        "SELECT * FROM products WHERE price = 75",
+        "SELECT name, age FROM users WHERE id = 3",        // Different projection, same WHERE clause pattern
+        "SELECT age, name FROM users WHERE id = 4",        // Different projection order, same pattern
+
+        // Pattern B: Two conditions with AND (order matters for pattern detection)
+        "SELECT * FROM users WHERE age > 18 AND name = 'John'",
+        "SELECT * FROM users WHERE name = 'Jane' AND age > 21",  // Different condition order = different pattern
+
+        // Pattern C: Numeric comparison on price (different operators = different patterns)
+        "SELECT * FROM products WHERE price > 100",   // Greater than
+        "SELECT * FROM products WHERE price < 50",    // Less than
+        "SELECT * FROM products WHERE price = 75",    // Equals
+
+        // Pattern D: Simple equality on string column
         "SELECT * FROM users WHERE name = 'John'",
         "SELECT * FROM users WHERE name = 'Alice'",
         "SELECT * FROM users WHERE name = 'Bob'",
+
+        // Pattern E: JOIN with WHERE clause on numeric comparison
         "SELECT o.id, c.name FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.total > 1000",
         "SELECT o.id, c.name FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.total > 5000",
+
+        // Pattern F: GROUP BY with HAVING clause
         "SELECT category, COUNT(*) FROM products GROUP BY category HAVING COUNT(*) > 5",
         "SELECT category, COUNT(*) FROM products GROUP BY category HAVING COUNT(*) > 10",
+
+        // Pattern G: Subquery with IN clause
         "SELECT * FROM orders WHERE customer_id IN (SELECT id FROM customers WHERE status = 'active')",
+
+        // Pattern H: ORDER BY with LIMIT
         "SELECT * FROM orders WHERE status = 'active' ORDER BY created_at DESC LIMIT 10",
         "SELECT * FROM orders WHERE status = 'active' ORDER BY created_at DESC LIMIT 20"
     };
-    
-    // Pattern descriptions matching each query above
-    // Used for display to show which queries share same patterns
+
+    // Pattern descriptions aligned with each query above
     private static final String[] QUERY_PATTERNS = {
-        "Users by ID (Pattern 1)",
-        "Users by ID (Pattern 1 - same)",      // Same pattern as q1
-        "Users by ID (Pattern 1 - same)",      // Same pattern as q1
-        "Users by ID (Pattern 1 - same)",      // Same pattern as q1
-        "Products price > (Pattern 2)",
-        "Products price < (Pattern 3 - different)",  // Different operator = different pattern
-        "Products price = (Pattern 4 - different)",  // Different operator = different pattern
-        "Users by name (Pattern 5)",
-        "Users by name (Pattern 5 - same)",    // Same pattern as q8
-        "Users by name (Pattern 5 - same)",    // Same pattern as q8
-        "JOIN orders/customers (Pattern 6)",
-        "JOIN orders/customers (Pattern 6 - same)",  // Same pattern as q11
-        "Aggregate GROUP BY (Pattern 7)",
-        "Aggregate GROUP BY (Pattern 7 - same)",     // Same pattern as q13
-        "Subquery IN (Pattern 8)",
-        "ORDER BY with LIMIT (Pattern 9)",
-        "ORDER BY with LIMIT (Pattern 9 - same)"     // Same pattern as q16
+        "Pattern A: WHERE id = ? (numeric equality)",
+        "Pattern A: WHERE id = ? (numeric equality)",
+        "Pattern A: WHERE id = ? (numeric equality)",
+        "Pattern A: WHERE id = ? (numeric equality)",
+        "Pattern B: WHERE age > ? AND name = '?' (age first)",
+        "Pattern C: WHERE name = '?' AND age > ? (name first)",
+        "Pattern D: WHERE price > ? (greater than)",
+        "Pattern E: WHERE price < ? (less than)",
+        "Pattern F: WHERE price = ? (equals)",
+        "Pattern G: WHERE name = '?' (string equality)",
+        "Pattern G: WHERE name = '?' (string equality)",
+        "Pattern G: WHERE name = '?' (string equality)",
+        "Pattern H: JOIN orders+customers WHERE total > ?",
+        "Pattern H: JOIN orders+customers WHERE total > ?",
+        "Pattern I: GROUP BY category HAVING COUNT(*) > ?",
+        "Pattern I: GROUP BY category HAVING COUNT(*) > ?",
+        "Pattern J: WHERE id IN (subquery)",
+        "Pattern K: WHERE status = 'active' ORDER BY created_at DESC LIMIT ?",
+        "Pattern K: WHERE status = 'active' ORDER BY created_at DESC LIMIT ?"
     };
     
     // Helper method to print separator line for visual clarity in console output
@@ -246,6 +257,9 @@ public class QueryPlanCacheTest {
      QueryService service = new QueryService();
      service.setCacheEnabled(true);
      service.clearCache();
+     
+     
+     
      
      String testQuery = "SELECT * FROM orders WHERE customer_id = 100";
      
